@@ -1,0 +1,44 @@
+
+snmp:
+  version: "2c"
+  community: "public"
+  timeout: "2s"
+  retries: 1
+  max_repetitions: 25
+
+target:
+  name: "r1"
+  address: "192.168.10.201"
+  port: 161
+
+collect:
+  system: true
+  interfaces: true
+  ip_routes: true
+  tcp_conns: true
+  udp_listeners: true
+
+oids:
+  system:
+    sysDescr:  "1.3.6.1.2.1.1.1.0"
+    sysUpTime: "1.3.6.1.2.1.1.3.0"
+    sysName:   "1.3.6.1.2.1.1.5.0"
+
+  interfaces:
+    ifDescr:      "1.3.6.1.2.1.2.2.1.2"
+    ifOperStatus: "1.3.6.1.2.1.2.2.1.8"
+    ifInOctets:   "1.3.6.1.2.1.2.2.1.10"
+    ifOutOctets:  "1.3.6.1.2.1.2.2.1.16"
+
+  ip_routes:
+    ipRouteDest:    "1.3.6.1.2.1.4.21.1.1"
+    ipRouteIfIndex: "1.3.6.1.2.1.4.21.1.2"
+    ipRouteNextHop: "1.3.6.1.2.1.4.21.1.7"
+    ipRouteType:    "1.3.6.1.2.1.4.21.1.8"
+    ipRouteMask:    "1.3.6.1.2.1.4.21.1.11"
+
+  tcp:
+    tcpConnState: "1.3.6.1.2.1.6.13.1.1"
+
+  udp:
+    udpLocalPort: "1.3.6.1.2.1.7.5.1.2"
