@@ -135,11 +135,6 @@ func Load(path string) (*Config, error) {
 			return nil, fmt.Errorf("oids.ip_routes.* must be set when collect.ip_routes=true")
 		}
 	}
-	if c.Collect.TCPConns {
-		if c.OIDs.TCP.TcpConnState == "" {
-			return nil, fmt.Errorf("oids.tcp.tcpConnState must be set when collect.tcp_conns=true")
-		}
-	}
 	if c.Collect.UDPListeners {
 		if c.OIDs.UDP.UdpLocalPort == "" {
 			return nil, fmt.Errorf("oids.udp.udpLocalPort must be set when collect.udp_listeners=true")
