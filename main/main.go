@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strings"
 
 	"github.com/gosnmp/gosnmp"
 
@@ -39,9 +40,6 @@ func main() {
 	if cfg.Collect.IPRoutes {
 		printIPRoutes(client, cfg.OIDs.IPRoutes)
 	}
-	if cfg.Collect.TCPConns {
-		printTCPConns(client, cfg.OIDs.TCP)
-	}
 	if cfg.Collect.UDPListeners {
 		printUDPListeners(client, cfg.OIDs.UDP)
 	}
@@ -62,7 +60,7 @@ func printSystem(client *snmp.Client, oids config.SystemOIDs) {
 	var uptime uint64
 
 	for _, vb := range pkt.Variables {
-		switch vb.Name {
+		switch strings.Trim(vb.Name, ".") {
 		case oids.SysDescr:
 			descr = convert.PDUToString(vb)
 		case oids.SysUpTime:
@@ -73,9 +71,9 @@ func printSystem(client *snmp.Client, oids config.SystemOIDs) {
 	}
 
 	fmt.Println("\n[System]")
-	fmt.Printf("  sysName   : %s\n", name)
-	fmt.Printf("  sysUpTime : %d (TimeTicks)\n", uptime)
-	fmt.Printf("  sysDescr  : %s\n", descr)
+	fmt.Printf("	sysName   : %s\n", name)
+	fmt.Printf("	sysUpTime : %d (TimeTicks)\n", uptime)
+	fmt.Printf("	sysDescr  : %s\n", descr)
 }
 
 /* ---------------- Interfaces ---------------- */
@@ -88,22 +86,19 @@ type IfRow struct {
 	OutOctets  uint64
 }
 
-func printInterfaces(c *snmp.Client, o config.InterfacesOIDs) {
+func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
 	rows := map[int]*IfRow{}
-	getRow := func(idx int) *IfRow {
-		r, ok := rows[idx]
+
+	getRow := func(index int) *IfRow {
+		r, ok := rows[index]
 		if !ok {
-			r = &IfRow{Index: idx}
-			rows[idx] = r
+			r = &IfRow{Index: index}
+			rows[index] = r
 		}
 		return r
 	}
 
-	walk := func(root string, fn gosnmp.WalkFunc) error {
-		return c.Walk(root, fn)
-	}
-
-	if err := walk(o.IfDescr, func(pdu gosnmp.SnmpPDU) error {
+	if err := client.Walk(oids.IfDescr, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
 			return err
@@ -115,32 +110,41 @@ func printInterfaces(c *snmp.Client, o config.InterfacesOIDs) {
 		return
 	}
 
-	_ = walk(o.IfOperStatus, func(pdu gosnmp.SnmpPDU) error {
+	if err := client.Walk(oids.IfOperStatus, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
 			return err
 		}
 		getRow(idx).OperStatus = convert.PDUToInt(pdu)
 		return nil
-	})
+	}); err != nil {
+		log.Printf("[Interfaces] walk ifOperStatus error: %v", err)
+		return
+	}
 
-	_ = walk(o.IfInOctets, func(pdu gosnmp.SnmpPDU) error {
+	if err := client.Walk(oids.IfInOctets, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
 			return err
 		}
 		getRow(idx).InOctets = convert.PDUToUint64(pdu)
 		return nil
-	})
+	}); err != nil {
+		log.Printf("[Interfaces] walk ifInOctets error: %v", err)
+		return
+	}
 
-	_ = walk(o.IfOutOctets, func(pdu gosnmp.SnmpPDU) error {
+	if err := client.Walk(oids.IfOutOctets, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
 			return err
 		}
 		getRow(idx).OutOctets = convert.PDUToUint64(pdu)
 		return nil
-	})
+	}); err != nil {
+		log.Printf("[Interfaces] walk ifOutOctets error: %v", err)
+		return
+	}
 
 	out := make([]IfRow, 0, len(rows))
 	for _, r := range rows {
@@ -150,29 +154,8 @@ func printInterfaces(c *snmp.Client, o config.InterfacesOIDs) {
 
 	fmt.Println("\n[Interfaces]")
 	for _, r := range out {
-		fmt.Printf("  ifIndex=%d descr=%q oper=%s inOctets=%d outOctets=%d\n",
-			r.Index, r.Descr, operStatusText(r.OperStatus), r.InOctets, r.OutOctets)
-	}
-}
-
-func operStatusText(v int) string {
-	switch v {
-	case 1:
-		return "up"
-	case 2:
-		return "down"
-	case 3:
-		return "testing"
-	case 4:
-		return "unknown"
-	case 5:
-		return "dormant"
-	case 6:
-		return "notPresent"
-	case 7:
-		return "lowerLayerDown"
-	default:
-		return "n/a"
+		fmt.Printf("	ifIndex=%d descr=%q oper=%s inOctets=%d outOctets=%d\n",
+			r.Index, r.Descr, convert.OperStatusText(r.OperStatus), r.InOctets, r.OutOctets)
 	}
 }
 
@@ -186,7 +169,7 @@ type RouteRow struct {
 	Type    int
 }
 
-func printIPRoutes(c *snmp.Client, o config.IPRoutesOIDs) {
+func printIPRoutes(client *snmp.Client, oids config.IPRoutesOIDs) {
 	rows := map[string]*RouteRow{}
 	getRow := func(dest string) *RouteRow {
 		r, ok := rows[dest]
@@ -197,7 +180,7 @@ func printIPRoutes(c *snmp.Client, o config.IPRoutesOIDs) {
 		return r
 	}
 
-	_ = c.Walk(o.IpRouteDest, func(pdu gosnmp.SnmpPDU) error {
+	_ = client.Walk(oids.IpRouteDest, func(pdu gosnmp.SnmpPDU) error {
 		dest, err := convert.ParseLastIPv4FromOID(pdu.Name)
 		if err != nil {
 			return err
@@ -206,7 +189,7 @@ func printIPRoutes(c *snmp.Client, o config.IPRoutesOIDs) {
 		return nil
 	})
 
-	_ = c.Walk(o.IpRouteMask, func(pdu gosnmp.SnmpPDU) error {
+	_ = client.Walk(oids.IpRouteMask, func(pdu gosnmp.SnmpPDU) error {
 		dest, err := convert.ParseLastIPv4FromOID(pdu.Name)
 		if err != nil {
 			return err
@@ -215,7 +198,7 @@ func printIPRoutes(c *snmp.Client, o config.IPRoutesOIDs) {
 		return nil
 	})
 
-	_ = c.Walk(o.IpRouteNextHop, func(pdu gosnmp.SnmpPDU) error {
+	_ = client.Walk(oids.IpRouteNextHop, func(pdu gosnmp.SnmpPDU) error {
 		dest, err := convert.ParseLastIPv4FromOID(pdu.Name)
 		if err != nil {
 			return err
@@ -224,7 +207,7 @@ func printIPRoutes(c *snmp.Client, o config.IPRoutesOIDs) {
 		return nil
 	})
 
-	_ = c.Walk(o.IpRouteIfIndex, func(pdu gosnmp.SnmpPDU) error {
+	_ = client.Walk(oids.IpRouteIfIndex, func(pdu gosnmp.SnmpPDU) error {
 		dest, err := convert.ParseLastIPv4FromOID(pdu.Name)
 		if err != nil {
 			return err
@@ -233,7 +216,7 @@ func printIPRoutes(c *snmp.Client, o config.IPRoutesOIDs) {
 		return nil
 	})
 
-	_ = c.Walk(o.IpRouteType, func(pdu gosnmp.SnmpPDU) error {
+	_ = client.Walk(oids.IpRouteType, func(pdu gosnmp.SnmpPDU) error {
 		dest, err := convert.ParseLastIPv4FromOID(pdu.Name)
 		if err != nil {
 			return err
@@ -251,103 +234,7 @@ func printIPRoutes(c *snmp.Client, o config.IPRoutesOIDs) {
 	fmt.Println("\n[IP Routes]")
 	for _, r := range out {
 		fmt.Printf("  dest=%s mask=%s nextHop=%s ifIndex=%d type=%s\n",
-			r.Dest, r.Mask, r.NextHop, r.IfIndex, routeTypeText(r.Type))
-	}
-}
-
-func routeTypeText(v int) string {
-	switch v {
-	case 1:
-		return "other"
-	case 2:
-		return "invalid"
-	case 3:
-		return "direct"
-	case 4:
-		return "indirect"
-	default:
-		return "n/a"
-	}
-}
-
-/* ---------------- TCP ---------------- */
-
-type TCPConn struct {
-	LocalAddr string
-	LocalPort int
-	RemAddr   string
-	RemPort   int
-	State     int
-}
-
-func printTCPConns(c *snmp.Client, o config.TCPOIDs) {
-	rows := map[string]*TCPConn{}
-
-	_ = c.Walk(o.TcpConnState, func(pdu gosnmp.SnmpPDU) error {
-		ints, err := convert.ParseLastNInts(pdu.Name, 10)
-		if err != nil {
-			return err
-		}
-		la := fmt.Sprintf("%d.%d.%d.%d", ints[0], ints[1], ints[2], ints[3])
-		lp := ints[4]
-		ra := fmt.Sprintf("%d.%d.%d.%d", ints[5], ints[6], ints[7], ints[8])
-		rp := ints[9]
-		key := fmt.Sprintf("%s:%d->%s:%d", la, lp, ra, rp)
-
-		rows[key] = &TCPConn{
-			LocalAddr: la, LocalPort: lp,
-			RemAddr: ra, RemPort: rp,
-			State: convert.PDUToInt(pdu),
-		}
-		return nil
-	})
-
-	out := make([]*TCPConn, 0, len(rows))
-	for _, v := range rows {
-		out = append(out, v)
-	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].LocalAddr == out[j].LocalAddr {
-			return out[i].LocalPort < out[j].LocalPort
-		}
-		return out[i].LocalAddr < out[j].LocalAddr
-	})
-
-	fmt.Println("\n[TCP Connections]")
-	for _, t := range out {
-		fmt.Printf("  %s:%d -> %s:%d state=%s\n",
-			t.LocalAddr, t.LocalPort, t.RemAddr, t.RemPort, tcpStateText(t.State))
-	}
-}
-
-func tcpStateText(v int) string {
-	switch v {
-	case 1:
-		return "closed"
-	case 2:
-		return "listen"
-	case 3:
-		return "synSent"
-	case 4:
-		return "synReceived"
-	case 5:
-		return "established"
-	case 6:
-		return "finWait1"
-	case 7:
-		return "finWait2"
-	case 8:
-		return "closeWait"
-	case 9:
-		return "lastAck"
-	case 10:
-		return "closing"
-	case 11:
-		return "timeWait"
-	case 12:
-		return "deleteTCB"
-	default:
-		return "n/a"
+			r.Dest, r.Mask, r.NextHop, r.IfIndex, convert.RouteTypeText(r.Type))
 	}
 }
 
@@ -358,10 +245,10 @@ type UDPListener struct {
 	LocalPort int
 }
 
-func printUDPListeners(c *snmp.Client, o config.UDPOIDs) {
+func printUDPListeners(client *snmp.Client, oids config.UDPOIDs) {
 	rows := map[string]*UDPListener{}
 
-	_ = c.Walk(o.UdpLocalPort, func(pdu gosnmp.SnmpPDU) error {
+	_ = client.Walk(oids.UdpLocalPort, func(pdu gosnmp.SnmpPDU) error {
 		ints, err := convert.ParseLastNInts(pdu.Name, 5)
 		if err != nil {
 			return err

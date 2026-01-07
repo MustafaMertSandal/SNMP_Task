@@ -87,3 +87,39 @@ func ParseLastNInts(oid string, n int) ([]int, error) {
 	}
 	return out, nil
 }
+
+func OperStatusText(v int) string {
+	switch v {
+	case 1:
+		return "up"
+	case 2:
+		return "down"
+	case 3:
+		return "testing"
+	case 4:
+		return "unknown"
+	case 5:
+		return "dormant"
+	case 6:
+		return "notPresent"
+	case 7:
+		return "lowerLayerDown"
+	default:
+		return "n/a"
+	}
+}
+
+func RouteTypeText(v int) string {
+	switch v {
+	case 1:
+		return "other"
+	case 2:
+		return "invalid"
+	case 3:
+		return "direct"
+	case 4:
+		return "indirect"
+	default:
+		return "n/a"
+	}
+}

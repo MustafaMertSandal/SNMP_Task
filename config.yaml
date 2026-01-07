@@ -7,7 +7,7 @@ snmp:
   max_repetitions: 25
 
 target:
-  name: "r1"
+  name: "R1"
   address: "192.168.10.201"
   port: 161
 
@@ -36,9 +36,6 @@ oids:
     ipRouteNextHop: "1.3.6.1.2.1.4.21.1.7"
     ipRouteType:    "1.3.6.1.2.1.4.21.1.8"
     ipRouteMask:    "1.3.6.1.2.1.4.21.1.11"
-
-  tcp:
-    tcpConnState: "1.3.6.1.2.1.6.13.1.1"
 
   udp:
     udpLocalPort: "1.3.6.1.2.1.7.5.1.2"
