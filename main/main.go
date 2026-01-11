@@ -1,20 +1,25 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/gosnmp/gosnmp"
 
 	"github.com/MustafaMertSandal/SNMP_Task/internal/config"
 	"github.com/MustafaMertSandal/SNMP_Task/internal/convert"
+	"github.com/MustafaMertSandal/SNMP_Task/internal/db"
 	"github.com/MustafaMertSandal/SNMP_Task/internal/snmp"
 )
 
 func main() {
+
+	// Config'deki degerler icin cfg tanimlama
 	cfgPath := flag.String("config", "../config.yaml", "path to config file")
 	flag.Parse()
 
@@ -25,23 +30,124 @@ func main() {
 
 	fmt.Printf("[Target]\n	Name: %s\n	Address: %s:%d\n", cfg.Target.Name, cfg.Target.Address, cfg.Target.Port)
 
+	// SNMP icin client tanimlama
 	client, err := snmp.New(cfg)
 	if err != nil {
 		log.Fatalf("snmp connect error: %v", err)
 	}
 	defer client.Close()
 
+	ctx := context.Background()
+
+	var store *db.Store
+	var deviceID int64
+
+	// Database enable ise pool ve store'u tanimla.
+	if cfg.Database.Enabled {
+
+		//Pool tanimlama
+		pool, err := db.NewPool(ctx, cfg.Database)
+		if err != nil {
+			log.Fatalf("db connect error: %v", err)
+		}
+
+		//Store tanimlama
+		store = db.NewStore(pool, cfg.Database.BatchSize)
+		defer store.Close()
+
+		//Device'i ekle ve id'sini al.
+		deviceID, err = store.EnsureDevice(ctx, cfg.Target.Name)
+		if err != nil {
+			log.Fatalf("db ensure device error: %v", err)
+		}
+		log.Printf("[DB] connected, device_id=%d (device_name=%q)", deviceID, cfg.Target.Name)
+	}
+
+	pollTime := time.Now().UTC()
+
+	// System enable ise system bilgilerini (sysName, sysUpTime ve sysDescr) snmp ile alir ve database'e ekler.
 	if cfg.Collect.System {
-		printSystem(client, cfg.OIDs.System)
+		sysName, uptime, sysDescr, err := collectSystem(client, cfg.OIDs.System)
+
+		if err != nil {
+			log.Printf("[System] collect error: %v", err)
+		} else {
+			fmt.Println("[System]")
+			fmt.Printf("	sysName   : %s\n", sysName)
+			fmt.Printf("	sysUpTime : %d (TimeTicks)\n", uptime)
+			fmt.Printf("	sysDescr  : %s\n", sysDescr)
+
+			if store != nil {
+				if err := store.InsertRouterSNMP(ctx, pollTime, deviceID, sysName, int64(uptime), sysDescr); err != nil {
+					log.Printf("[DB] insert router_snmp error: %v", err)
+				}
+			}
+		}
 	}
+
+	// Interfaces enable ise interface bilgilerini (ifIndex, descr, ifOperStatus, ifInOctets ve ifOutOctets) snmp ile alir ve database'e ekler.
 	if cfg.Collect.Interfaces {
-		printInterfaces(client, cfg.OIDs.Interfaces)
+		ifRows, err := collectInterfaces(client, cfg.OIDs.Interfaces)
+
+		if err != nil {
+			log.Printf("[Interfaces] collect error: %v", err)
+		} else {
+			fmt.Println("[Interfaces]")
+			for _, r := range ifRows {
+				fmt.Printf("	ifIndex=%d descr=%q oper=%s inOctets=%d outOctets=%d\n",
+					r.Index, r.Descr, convert.OperStatusText(r.OperStatus), r.InOctets, r.OutOctets)
+			}
+
+			if store != nil {
+				metrics := make([]db.IfMetric, 0, len(ifRows))
+				for _, r := range ifRows {
+					metrics = append(metrics, db.IfMetric{
+						IfIndex:    r.Index,
+						IfDescr:    r.Descr,
+						OperStatus: r.OperStatus,
+						InOctets:   r.InOctets,
+						OutOctets:  r.OutOctets,
+					})
+				}
+				if err := store.InsertInterfaceMetrics(ctx, pollTime, deviceID, metrics); err != nil {
+					log.Printf("[DB] insert router_interface_metrics error: %v", err)
+				}
+			}
+		}
 	}
+
+	// IPRoutes enable ise IPRoutes bilgilerini (dest, mask, nextHop, ifIndex ve type) snmp ile alir ve database'e ekler.
 	if cfg.Collect.IPRoutes {
-		printIPRoutes(client, cfg.OIDs.IPRoutes)
-	}
-	if cfg.Collect.UDPListeners {
-		printUDPListeners(client, cfg.OIDs.UDP)
+		routes, err := collectIPRoutes(client, cfg.OIDs.IPRoutes)
+		if err != nil {
+			log.Printf("[IP Routes] collect error: %v", err)
+		} else {
+			fmt.Println("[IP Routes]")
+			for _, r := range routes {
+				fmt.Printf("	dest=%s mask=%s nextHop=%s ifIndex=%d type=%s\n",
+					r.Dest, r.Mask, r.NextHop, r.IfIndex, convert.RouteTypeText(r.Type))
+			}
+
+			if store != nil {
+				dbRoutes := make([]db.RouteRow, 0, len(routes))
+				for _, r := range routes {
+					// Avoid invalid inet casts
+					if r.Dest == "" || r.Mask == "" || r.NextHop == "" {
+						continue
+					}
+					dbRoutes = append(dbRoutes, db.RouteRow{
+						Dest:    r.Dest,
+						Mask:    r.Mask,
+						NextHop: r.NextHop,
+						IfIndex: r.IfIndex,
+						Type:    r.Type,
+					})
+				}
+				if err := store.InsertIPRoutes(ctx, pollTime, deviceID, dbRoutes); err != nil {
+					log.Printf("[DB] insert router_ip_routes error: %v", err)
+				}
+			}
+		}
 	}
 
 	client.Close()
@@ -49,31 +155,25 @@ func main() {
 
 /* ---------------- System ---------------- */
 
-func printSystem(client *snmp.Client, oids config.SystemOIDs) {
+// System bilgilerini snmp ile alir ve dogru formata cevirir.
+func collectSystem(client *snmp.Client, oids config.SystemOIDs) (sysName string, uptime uint64, sysDescr string, err error) {
 	pkt, err := client.Get(oids.SysDescr, oids.SysUpTime, oids.SysName)
 	if err != nil {
-		log.Printf("[System] get error: %v", err)
-		return
+		return "", 0, "", err
 	}
-
-	var descr, name string
-	var uptime uint64
 
 	for _, vb := range pkt.Variables {
 		switch strings.Trim(vb.Name, ".") {
 		case oids.SysDescr:
-			descr = convert.PDUToString(vb)
+			sysDescr = convert.PDUToString(vb)
 		case oids.SysUpTime:
 			uptime = convert.PDUToUint64(vb)
 		case oids.SysName:
-			name = convert.PDUToString(vb)
+			sysName = convert.PDUToString(vb)
 		}
 	}
 
-	fmt.Println("\n[System]")
-	fmt.Printf("	sysName   : %s\n", name)
-	fmt.Printf("	sysUpTime : %d (TimeTicks)\n", uptime)
-	fmt.Printf("	sysDescr  : %s\n", descr)
+	return sysName, uptime, sysDescr, nil
 }
 
 /* ---------------- Interfaces ---------------- */
@@ -86,7 +186,7 @@ type IfRow struct {
 	OutOctets  uint64
 }
 
-func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
+func collectInterfaces(client *snmp.Client, oids config.InterfacesOIDs) ([]IfRow, error) {
 	rows := map[int]*IfRow{}
 
 	getRow := func(index int) *IfRow {
@@ -98,6 +198,7 @@ func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
 		return r
 	}
 
+	//IfDescr
 	if err := client.Walk(oids.IfDescr, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
@@ -106,10 +207,10 @@ func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
 		getRow(idx).Descr = convert.PDUToString(pdu)
 		return nil
 	}); err != nil {
-		log.Printf("[Interfaces] walk ifDescr error: %v", err)
-		return
+		return nil, err
 	}
 
+	//IfOperStatus
 	if err := client.Walk(oids.IfOperStatus, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
@@ -118,10 +219,10 @@ func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
 		getRow(idx).OperStatus = convert.PDUToInt(pdu)
 		return nil
 	}); err != nil {
-		log.Printf("[Interfaces] walk ifOperStatus error: %v", err)
-		return
+		return nil, err
 	}
 
+	//IfInOctets
 	if err := client.Walk(oids.IfInOctets, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
@@ -130,10 +231,10 @@ func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
 		getRow(idx).InOctets = convert.PDUToUint64(pdu)
 		return nil
 	}); err != nil {
-		log.Printf("[Interfaces] walk ifInOctets error: %v", err)
-		return
+		return nil, err
 	}
 
+	//IfOutOctets
 	if err := client.Walk(oids.IfOutOctets, func(pdu gosnmp.SnmpPDU) error {
 		idx, err := convert.ParseLastIntIndex(pdu.Name)
 		if err != nil {
@@ -142,8 +243,7 @@ func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
 		getRow(idx).OutOctets = convert.PDUToUint64(pdu)
 		return nil
 	}); err != nil {
-		log.Printf("[Interfaces] walk ifOutOctets error: %v", err)
-		return
+		return nil, err
 	}
 
 	out := make([]IfRow, 0, len(rows))
@@ -151,12 +251,7 @@ func printInterfaces(client *snmp.Client, oids config.InterfacesOIDs) {
 		out = append(out, *r)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Index < out[j].Index })
-
-	fmt.Println("\n[Interfaces]")
-	for _, r := range out {
-		fmt.Printf("	ifIndex=%d descr=%q oper=%s inOctets=%d outOctets=%d\n",
-			r.Index, r.Descr, convert.OperStatusText(r.OperStatus), r.InOctets, r.OutOctets)
-	}
+	return out, nil
 }
 
 /* ---------------- IP Routes ---------------- */
@@ -169,7 +264,7 @@ type RouteRow struct {
 	Type    int
 }
 
-func printIPRoutes(client *snmp.Client, oids config.IPRoutesOIDs) {
+func collectIPRoutes(client *snmp.Client, oids config.IPRoutesOIDs) ([]RouteRow, error) {
 	rows := map[string]*RouteRow{}
 	getRow := func(dest string) *RouteRow {
 		r, ok := rows[dest]
@@ -180,14 +275,16 @@ func printIPRoutes(client *snmp.Client, oids config.IPRoutesOIDs) {
 		return r
 	}
 
-	_ = client.Walk(oids.IpRouteDest, func(pdu gosnmp.SnmpPDU) error {
+	if err := client.Walk(oids.IpRouteDest, func(pdu gosnmp.SnmpPDU) error {
 		dest, err := convert.ParseLastIPv4FromOID(pdu.Name)
 		if err != nil {
 			return err
 		}
 		getRow(dest)
 		return nil
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	_ = client.Walk(oids.IpRouteMask, func(pdu gosnmp.SnmpPDU) error {
 		dest, err := convert.ParseLastIPv4FromOID(pdu.Name)
@@ -230,49 +327,5 @@ func printIPRoutes(client *snmp.Client, oids config.IPRoutesOIDs) {
 		out = append(out, *r)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Dest < out[j].Dest })
-
-	fmt.Println("\n[IP Routes]")
-	for _, r := range out {
-		fmt.Printf("  dest=%s mask=%s nextHop=%s ifIndex=%d type=%s\n",
-			r.Dest, r.Mask, r.NextHop, r.IfIndex, convert.RouteTypeText(r.Type))
-	}
-}
-
-/* ---------------- UDP ---------------- */
-
-type UDPListener struct {
-	LocalAddr string
-	LocalPort int
-}
-
-func printUDPListeners(client *snmp.Client, oids config.UDPOIDs) {
-	rows := map[string]*UDPListener{}
-
-	_ = client.Walk(oids.UdpLocalPort, func(pdu gosnmp.SnmpPDU) error {
-		ints, err := convert.ParseLastNInts(pdu.Name, 5)
-		if err != nil {
-			return err
-		}
-		la := fmt.Sprintf("%d.%d.%d.%d", ints[0], ints[1], ints[2], ints[3])
-		lp := ints[4]
-		key := fmt.Sprintf("%s:%d", la, lp)
-		rows[key] = &UDPListener{LocalAddr: la, LocalPort: lp}
-		return nil
-	})
-
-	out := make([]*UDPListener, 0, len(rows))
-	for _, v := range rows {
-		out = append(out, v)
-	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].LocalAddr == out[j].LocalAddr {
-			return out[i].LocalPort < out[j].LocalPort
-		}
-		return out[i].LocalAddr < out[j].LocalAddr
-	})
-
-	fmt.Println("\n[UDP Listeners]")
-	for _, u := range out {
-		fmt.Printf("  %s:%d\n", u.LocalAddr, u.LocalPort)
-	}
+	return out, nil
 }

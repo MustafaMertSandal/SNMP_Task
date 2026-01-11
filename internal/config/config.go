@@ -39,22 +39,20 @@ type Config struct {
 	} `yaml:"target"`
 
 	Collect struct {
-		System       bool `yaml:"system"`
-		Interfaces   bool `yaml:"interfaces"`
-		IPRoutes     bool `yaml:"ip_routes"`
-		TCPConns     bool `yaml:"tcp_conns"`
-		UDPListeners bool `yaml:"udp_listeners"`
+		System     bool `yaml:"system"`
+		Interfaces bool `yaml:"interfaces"`
+		IPRoutes   bool `yaml:"ip_routes"`
 	} `yaml:"collect"`
 
 	OIDs OIDs `yaml:"oids"`
+
+	Database DatabaseConfig `yaml:"database"`
 }
 
 type OIDs struct {
 	System     SystemOIDs     `yaml:"system"`
 	Interfaces InterfacesOIDs `yaml:"interfaces"`
 	IPRoutes   IPRoutesOIDs   `yaml:"ip_routes"`
-	TCP        TCPOIDs        `yaml:"tcp"`
-	UDP        UDPOIDs        `yaml:"udp"`
 }
 
 type SystemOIDs struct {
@@ -78,12 +76,21 @@ type IPRoutesOIDs struct {
 	IpRouteMask    string `yaml:"ipRouteMask"`
 }
 
-type TCPOIDs struct {
-	TcpConnState string `yaml:"tcpConnState"`
-}
+type DatabaseConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	DBName   string `yaml:"name"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	SSLMode  string `yaml:"sslmode"`
 
-type UDPOIDs struct {
-	UdpLocalPort string `yaml:"udpLocalPort"`
+	BatchSize int `yaml:"batch_size"`
+
+	// Pool tuning (optional)
+	MaxConns        int32    `yaml:"max_conns"`
+	MinConns        int32    `yaml:"min_conns"`
+	MaxConnLifetime Duration `yaml:"max_conn_lifetime"`
 }
 
 func Load(path string) (*Config, error) {
@@ -97,7 +104,6 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
-	// Minimal validation + defaults
 	if c.SNMP.Version == "" {
 		return nil, fmt.Errorf("snmp.version required")
 	}
@@ -135,9 +141,24 @@ func Load(path string) (*Config, error) {
 			return nil, fmt.Errorf("oids.ip_routes.* must be set when collect.ip_routes=true")
 		}
 	}
-	if c.Collect.UDPListeners {
-		if c.OIDs.UDP.UdpLocalPort == "" {
-			return nil, fmt.Errorf("oids.udp.udpLocalPort must be set when collect.udp_listeners=true")
+
+	// Database defaults + validation (optional)
+	// If you only want to print to stdout, set database.enabled=false in config.yaml
+	if c.Database.Enabled {
+		if c.Database.Port == 0 {
+			c.Database.Port = 5432
+		}
+		if c.Database.SSLMode == "" {
+			c.Database.SSLMode = "disable"
+		}
+		if c.Database.BatchSize == 0 {
+			c.Database.BatchSize = 200
+		}
+		if c.Database.MaxConnLifetime.Duration == 0 {
+			c.Database.MaxConnLifetime.Duration = 30 * time.Minute
+		}
+		if c.Database.Host == "" || c.Database.DBName == "" || c.Database.User == "" {
+			return nil, fmt.Errorf("database.host, database.name and database.user must be set when database.enabled=true")
 		}
 	}
 
