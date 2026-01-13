@@ -6,10 +6,19 @@ snmp:
   retries: 1
   max_repetitions: 25
 
-target:
-  name: "R1"
-  address: "10.10.10.1"
-  port: 161
+polling:
+  interval: "10s"
+  concurrency: 5
+  jitter: "0ms"
+
+targets:
+  - name: "R1"
+    address: "10.10.10.1"
+    port: 161
+  
+  - name: "R2"
+    address: "10.10.20.2"
+    port: 161
 
 collect:
   system: true

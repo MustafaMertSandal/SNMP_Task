@@ -5,8 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gosnmp/gosnmp"
@@ -28,19 +31,13 @@ func main() {
 		log.Fatalf("config load error: %v", err)
 	}
 
-	fmt.Printf("[Target]\n	Name: %s\n	Address: %s:%d\n", cfg.Target.Name, cfg.Target.Address, cfg.Target.Port)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// SNMP icin client tanimlama
-	client, err := snmp.New(cfg)
-	if err != nil {
-		log.Fatalf("snmp connect error: %v", err)
-	}
-	defer client.Close()
-
-	ctx := context.Background()
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	var store *db.Store
-	var deviceID int64
 
 	// Database enable ise pool ve store'u tanimla.
 	if cfg.Database.Enabled {
@@ -54,13 +51,45 @@ func main() {
 		//Store tanimlama
 		store = db.NewStore(pool, cfg.Database.BatchSize)
 		defer store.Close()
+	}
+
+	for _, v := range cfg.Targets {
+		go pollLoop(ctx, 10*time.Second, cfg, v, store)
+	}
+
+	fmt.Println("Polling started. Press Ctrl+C to stop.")
+	<-sigCh // burada sen kapatana kadar bekler
+	fmt.Println("\nStopping...")
+	cancel()
+
+	// Goroutine'in düzgün kapanması için küçük bekleme (opsiyonel)
+	time.Sleep(300 * time.Millisecond)
+}
+
+/* ---------------- Goroutine ---------------- */
+
+func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig, store *db.Store) error {
+	fmt.Println("[Target]")
+	fmt.Printf("	-Name: %s\n	Address: %s:%d\n\n", trgt.Name, trgt.Address, trgt.Port)
+
+	// SNMP icin client tanimlama
+	client, err := snmp.New(cfg, trgt)
+	if err != nil {
+		log.Fatalf("snmp connect error: %v", err)
+	}
+	defer client.Close()
+
+	var deviceID int64
+
+	// Database enable ise pool ve store'u tanimla.
+	if cfg.Database.Enabled {
 
 		//Device'i ekle ve id'sini al.
-		deviceID, err = store.EnsureDevice(ctx, cfg.Target.Name)
+		deviceID, err = store.EnsureDevice(ctx, trgt.Name)
 		if err != nil {
 			log.Fatalf("db ensure device error: %v", err)
 		}
-		log.Printf("[DB] connected, device_id=%d (device_name=%q)", deviceID, cfg.Target.Name)
+		log.Printf("[DB] connected, device_id=%d (device_name=%q)", deviceID, trgt.Name)
 	}
 
 	pollTime := time.Now().UTC()
@@ -149,8 +178,31 @@ func main() {
 			}
 		}
 	}
-
 	client.Close()
+	fmt.Println("polling at:", time.Now().Format(time.RFC3339))
+	return nil
+}
+
+func pollLoop(ctx context.Context, interval time.Duration, cfg *config.Config, trgt config.TargetConfig, store *db.Store) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	//Program başlar başlamaz 1 kere poll:
+	if err := pollOnce(ctx, cfg, trgt, store); err != nil {
+		fmt.Println("poll error:", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("pollLoop stopped:", ctx.Err())
+			return
+		case <-ticker.C:
+			if err := pollOnce(ctx, cfg, trgt, store); err != nil {
+				fmt.Println("poll error:", err)
+			}
+		}
+	}
 }
 
 /* ---------------- System ---------------- */

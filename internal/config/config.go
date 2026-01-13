@@ -32,21 +32,23 @@ type Config struct {
 		MaxRepetitions uint32   `yaml:"max_repetitions"`
 	} `yaml:"snmp"`
 
-	Target struct {
-		Name    string `yaml:"name"`
-		Address string `yaml:"address"`
-		Port    uint16 `yaml:"port"`
-	} `yaml:"target"`
-
 	Collect struct {
 		System     bool `yaml:"system"`
 		Interfaces bool `yaml:"interfaces"`
 		IPRoutes   bool `yaml:"ip_routes"`
 	} `yaml:"collect"`
 
+	Targets []TargetConfig `yaml:"targets"`
+
 	OIDs OIDs `yaml:"oids"`
 
 	Database DatabaseConfig `yaml:"database"`
+}
+
+type TargetConfig struct {
+	Name    string `yaml:"name"`
+	Address string `yaml:"address"`
+	Port    uint16 `yaml:"port"`
 }
 
 type OIDs struct {
@@ -87,7 +89,6 @@ type DatabaseConfig struct {
 
 	BatchSize int `yaml:"batch_size"`
 
-	// Pool tuning (optional)
 	MaxConns        int32    `yaml:"max_conns"`
 	MinConns        int32    `yaml:"min_conns"`
 	MaxConnLifetime Duration `yaml:"max_conn_lifetime"`
@@ -110,17 +111,27 @@ func Load(path string) (*Config, error) {
 	if c.SNMP.Version == "2c" && c.SNMP.Community == "" {
 		return nil, fmt.Errorf("snmp.community required for v2c")
 	}
-	if c.Target.Address == "" {
-		return nil, fmt.Errorf("target.address required")
-	}
-	if c.Target.Port == 0 {
-		c.Target.Port = 161
-	}
 	if c.SNMP.Timeout.Duration == 0 {
 		c.SNMP.Timeout.Duration = 2 * time.Second
 	}
 	if c.SNMP.MaxRepetitions == 0 {
 		c.SNMP.MaxRepetitions = 25
+	}
+
+	//Target validation
+	if len(c.Targets) == 0 {
+		return nil, fmt.Errorf("no targets configured: set target: or targets:")
+	}
+	for i := range c.Targets {
+		if c.Targets[i].Name == "" {
+			return nil, fmt.Errorf("targets[%d].name required", i)
+		}
+		if c.Targets[i].Address == "" {
+			return nil, fmt.Errorf("targets[%d].address required", i)
+		}
+		if c.Targets[i].Port == 0 {
+			c.Targets[i].Port = 161
+		}
 	}
 
 	// OID validation (sadece ilgili collect açıksa zorunlu tutuyoruz)

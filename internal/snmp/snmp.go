@@ -11,7 +11,7 @@ type Client struct {
 	snmp *gosnmp.GoSNMP
 }
 
-func New(cfg *config.Config) (*Client, error) {
+func New(cfg *config.Config, target config.TargetConfig) (*Client, error) {
 	version := gosnmp.Version2c
 	switch cfg.SNMP.Version {
 	case "2c":
@@ -21,8 +21,8 @@ func New(cfg *config.Config) (*Client, error) {
 	}
 
 	g := &gosnmp.GoSNMP{
-		Target:         cfg.Target.Address,
-		Port:           cfg.Target.Port,
+		Target:         target.Address,
+		Port:           target.Port,
 		Community:      cfg.SNMP.Community,
 		Version:        version,
 		Timeout:        cfg.SNMP.Timeout.Duration,
