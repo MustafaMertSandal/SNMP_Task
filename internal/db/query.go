@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -13,32 +14,33 @@ type Device struct {
 	CreatedAt  time.Time
 }
 
-type RouterSNMPRow struct {
-	Time        time.Time
+type RouterSNMP struct {
+	Bucket      time.Time
 	DeviceID    int64
 	SysName     string
 	SysUptimeCS int64
 	SysDescr    string
 }
 
-type InterfaceMetricRow struct {
-	Time         time.Time
+type RouterInterfaceMetric struct {
+	Bucket       time.Time
 	DeviceID     int64
-	IfIndex      int
+	IfIndex      int32
 	IfDescr      string
 	IfOperStatus int16
 	IfInOctets   int64
 	IfOutOctets  int64
 }
 
-type RouteRowRead struct {
-	Time      time.Time
-	DeviceID  int64
-	Dest      string // inet -> string (ör: "10.10.10.0")
-	Mask      string // inet -> string (ör: "255.255.255.0")
-	NextHop   string // inet -> string (ör: "10.10.10.1")
-	IfIndex   int
-	RouteType int16
+type RouterIPRoute struct {
+	Bucket       time.Time
+	DeviceID     int64
+	Dest         string
+	Mask         string
+	NextHop      string
+	IfIndex      int32
+	RouteType    int16
+	LastSeenTime time.Time
 }
 
 // ---- Devices ----
@@ -56,128 +58,147 @@ func (s *Store) GetDeviceByID(ctx context.Context, deviceID int64) (Device, erro
 	return d, err
 }
 
-// Tüm cihazları listeler.
-func (s *Store) ListDevices(ctx context.Context) ([]Device, error) {
+// ---- Router_snmp ----
+
+// Device_id için en güncel downsample edilmiş satırları döner.
+
+func (s *Store) GetRouterSNMP1mAllByDeviceID(ctx context.Context, deviceID int64) ([]RouterSNMP, error) {
 	const q = `
-	SELECT device_id, device_name, created_at
-	FROM devices
-	ORDER BY device_id;
+		SELECT
+			bucket,
+			device_id,
+			sys_name,
+			sys_uptime_cs,
+			sys_descr
+		FROM router_snmp_1m
+		WHERE device_id = $1
+		ORDER BY bucket DESC;
 	`
 
-	rows, err := s.pool.Query(ctx, q)
+	rows, err := s.pool.Query(ctx, q, deviceID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query router_snmp_1m: %w", err)
 	}
 	defer rows.Close()
 
-	out := make([]Device, 0, 16)
+	out := make([]RouterSNMP, 0, 256)
 	for rows.Next() {
-		var d Device
-		if err := rows.Scan(&d.DeviceID, &d.DeviceName, &d.CreatedAt); err != nil {
-			return nil, err
-		}
-		out = append(out, d)
-	}
-	return out, rows.Err()
-}
-
-// ---- router_snmp ----
-
-// Device_id için en güncel (time desc) 1 satır döner.
-func (s *Store) GetLatestRouterSNMP(ctx context.Context, deviceID int64) (RouterSNMPRow, error) {
-	const q = `
-	SELECT time, device_id, sys_name, sys_uptime_cs, sys_descr
-	FROM router_snmp
-	WHERE device_id = $1
-	ORDER BY time DESC
-	LIMIT 1;
-	`
-
-	var r RouterSNMPRow
-	err := s.pool.QueryRow(ctx, q, deviceID).Scan(
-		&r.Time, &r.DeviceID, &r.SysName, &r.SysUptimeCS, &r.SysDescr,
-	)
-	return r, err
-}
-
-// ---- router_interface_metrics ----
-
-// device_id için her if_index’in en güncel satırını döner (DISTINCT ON ile).
-func (s *Store) GetLatestInterfaceMetricsPerIfIndex(ctx context.Context, deviceID int64, limit int64) ([]InterfaceMetricRow, error) {
-	const q = `
-	SELECT time, device_id, if_index, if_descr, if_oper_status, if_in_octets, if_out_octets
-	FROM router_interface_metrics
-	WHERE device_id = $1
-	ORDER BY time DESC
-	LIMIT $2;
-	`
-
-	rows, err := s.pool.Query(ctx, q, deviceID, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	out := make([]InterfaceMetricRow, 0, 32)
-	for rows.Next() {
-		var r InterfaceMetricRow
+		var r RouterSNMP
 		if err := rows.Scan(
-			&r.Time, &r.DeviceID, &r.IfIndex, &r.IfDescr, &r.IfOperStatus, &r.IfInOctets, &r.IfOutOctets,
+			&r.Bucket,
+			&r.DeviceID,
+			&r.SysName,
+			&r.SysUptimeCS,
+			&r.SysDescr,
 		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan router_snmp_1m: %w", err)
 		}
 		out = append(out, r)
 	}
-	return out, rows.Err()
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows router_snmp_1m: %w", err)
+	}
+
+	return out, nil
+}
+
+// ---- Router_interface_metrics ----
+
+// Device_id için en güncel downsample edilmiş satırları döner.
+func (s *Store) GetRouterInterfaceMetrics1mAllByDeviceID(ctx context.Context, deviceID int64) ([]RouterInterfaceMetric, error) {
+	const q = `
+		SELECT
+			bucket,
+			device_id,
+			if_index,
+			if_descr,
+			if_oper_status,
+			if_in_octets,
+			if_out_octets
+		FROM router_interface_metrics_1m
+		WHERE device_id = $1
+		ORDER BY bucket DESC, if_index ASC;
+	`
+
+	rows, err := s.pool.Query(ctx, q, deviceID)
+	if err != nil {
+		return nil, fmt.Errorf("query router_interface_metrics_1m: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]RouterInterfaceMetric, 0, 2048)
+
+	for rows.Next() {
+		var r RouterInterfaceMetric
+		if err := rows.Scan(
+			&r.Bucket,
+			&r.DeviceID,
+			&r.IfIndex,
+			&r.IfDescr,
+			&r.IfOperStatus,
+			&r.IfInOctets,
+			&r.IfOutOctets,
+		); err != nil {
+			return nil, fmt.Errorf("scan router_interface_metrics_1m: %w", err)
+		}
+		out = append(out, r)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows router_interface_metrics_1m: %w", err)
+	}
+
+	return out, nil
 }
 
 // ---- router_ip_routes ----
 
-// device_id için en son snapshot zamanını bulur ve o time’daki tüm route satırlarını döner.
-func (s *Store) GetLatestRoutesSnapshot(ctx context.Context, deviceID int64) (snapshotTime time.Time, routes []RouteRowRead, err error) {
-	// 1) En son time
-	const qMax = `
-	SELECT MAX(time)
-	FROM router_ip_routes
-	WHERE device_id = $1;
-	`
-
-	if err = s.pool.QueryRow(ctx, qMax, deviceID).Scan(&snapshotTime); err != nil {
-		return time.Time{}, nil, err
-	}
-	// snapshotTime NULL olabilir → pgx bunu error yapmaz; ama zero time gelebilir.
-	if snapshotTime.IsZero() {
-		return time.Time{}, []RouteRowRead{}, nil
-	}
-
-	// 2) O time’daki tüm routes
-	routes, err = s.GetRoutesAtTime(ctx, deviceID, snapshotTime)
-	return snapshotTime, routes, err
-}
-
-// GetRoutesAtTime: device_id + time için route satırlarını döner.
-func (s *Store) GetRoutesAtTime(ctx context.Context, deviceID int64, t time.Time) ([]RouteRowRead, error) {
+// Device_id için en güncel downsample edilmiş satırları döner.
+func (s *Store) GetRouterIPRoutes1mAllByDeviceID(ctx context.Context, deviceID int64) ([]RouterIPRoute, error) {
 	const q = `
-	SELECT time, device_id, dest::text, mask::text, next_hop::text, if_index, route_type
-	FROM router_ip_routes
-	WHERE device_id = $1
-	  AND time = $2
-	ORDER BY dest, mask, next_hop, if_index, route_type;
+		SELECT
+			bucket,
+			device_id,
+			dest,
+			mask,
+			next_hop,
+			if_index,
+			route_type,
+			last_seen_time
+		FROM router_ip_routes_1m
+		WHERE device_id = $1
+		ORDER BY bucket DESC, dest, mask, next_hop, if_index;
 	`
 
-	rows, err := s.pool.Query(ctx, q, deviceID, t)
+	rows, err := s.pool.Query(ctx, q, deviceID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query router_ip_routes_1m: %w", err)
 	}
 	defer rows.Close()
 
-	out := make([]RouteRowRead, 0, 64)
+	out := make([]RouterIPRoute, 0, 2048)
+
 	for rows.Next() {
-		var r RouteRowRead
-		if err := rows.Scan(&r.Time, &r.DeviceID, &r.Dest, &r.Mask, &r.NextHop, &r.IfIndex, &r.RouteType); err != nil {
-			return nil, err
+		var r RouterIPRoute
+		if err := rows.Scan(
+			&r.Bucket,
+			&r.DeviceID,
+			&r.Dest,
+			&r.Mask,
+			&r.NextHop,
+			&r.IfIndex,
+			&r.RouteType,
+			&r.LastSeenTime,
+		); err != nil {
+			return nil, fmt.Errorf("scan router_ip_routes_1m: %w", err)
 		}
 		out = append(out, r)
 	}
-	return out, rows.Err()
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows router_ip_routes_1m: %w", err)
+	}
+
+	return out, nil
 }

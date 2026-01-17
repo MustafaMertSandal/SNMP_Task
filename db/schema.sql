@@ -14,7 +14,7 @@ pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid
 -- PostgreSQL database dump
 --
 
-\restrict 8goTTb8TiJeyn2gDz5bjPuwJNukRfXUPF4zM0jcsQleqMPL7fE3rcheBqSAfN8n
+\restrict SHzaX8WHGbccMwEjORKjoxX4wDgolgMFvuxoUBzmknWVY1XMirgIWbVcTJkY0iP
 
 -- Dumped from database version 16.11
 -- Dumped by pg_dump version 16.11
@@ -151,6 +151,186 @@ CREATE VIEW _timescaledb_internal._direct_view_24 AS
 ALTER VIEW _timescaledb_internal._direct_view_24 OWNER TO postgres;
 
 --
+-- Name: _hyper_19_1160_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_19_1160_chunk (
+    CONSTRAINT constraint_1160 CHECK ((("time" >= '2026-01-17 22:21:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:22:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_snmp);
+
+
+ALTER TABLE _timescaledb_internal._hyper_19_1160_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_19_1163_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_19_1163_chunk (
+    CONSTRAINT constraint_1163 CHECK ((("time" >= '2026-01-17 22:22:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:23:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_snmp);
+
+
+ALTER TABLE _timescaledb_internal._hyper_19_1163_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_19_1169_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_19_1169_chunk (
+    CONSTRAINT constraint_1169 CHECK ((("time" >= '2026-01-17 22:24:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:25:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_snmp);
+
+
+ALTER TABLE _timescaledb_internal._hyper_19_1169_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_19_1172_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_19_1172_chunk (
+    CONSTRAINT constraint_1172 CHECK ((("time" >= '2026-01-17 22:25:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:26:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_snmp);
+
+
+ALTER TABLE _timescaledb_internal._hyper_19_1172_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_19_1175_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_19_1175_chunk (
+    CONSTRAINT constraint_1175 CHECK ((("time" >= '2026-01-17 22:26:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:27:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_snmp);
+
+
+ALTER TABLE _timescaledb_internal._hyper_19_1175_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_20_1161_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_20_1161_chunk (
+    CONSTRAINT constraint_1161 CHECK ((("time" >= '2026-01-17 22:21:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:22:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_interface_metrics);
+
+
+ALTER TABLE _timescaledb_internal._hyper_20_1161_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_20_1164_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_20_1164_chunk (
+    CONSTRAINT constraint_1164 CHECK ((("time" >= '2026-01-17 22:22:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:23:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_interface_metrics);
+
+
+ALTER TABLE _timescaledb_internal._hyper_20_1164_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_20_1170_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_20_1170_chunk (
+    CONSTRAINT constraint_1170 CHECK ((("time" >= '2026-01-17 22:24:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:25:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_interface_metrics);
+
+
+ALTER TABLE _timescaledb_internal._hyper_20_1170_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_20_1173_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_20_1173_chunk (
+    CONSTRAINT constraint_1173 CHECK ((("time" >= '2026-01-17 22:25:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:26:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_interface_metrics);
+
+
+ALTER TABLE _timescaledb_internal._hyper_20_1173_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_20_1176_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_20_1176_chunk (
+    CONSTRAINT constraint_1176 CHECK ((("time" >= '2026-01-17 22:26:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:27:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_interface_metrics);
+
+
+ALTER TABLE _timescaledb_internal._hyper_20_1176_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_21_1162_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_21_1162_chunk (
+    CONSTRAINT constraint_1162 CHECK ((("time" >= '2026-01-17 22:21:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:22:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_ip_routes);
+
+
+ALTER TABLE _timescaledb_internal._hyper_21_1162_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_21_1165_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_21_1165_chunk (
+    CONSTRAINT constraint_1165 CHECK ((("time" >= '2026-01-17 22:22:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:23:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_ip_routes);
+
+
+ALTER TABLE _timescaledb_internal._hyper_21_1165_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_21_1171_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_21_1171_chunk (
+    CONSTRAINT constraint_1171 CHECK ((("time" >= '2026-01-17 22:24:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:25:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_ip_routes);
+
+
+ALTER TABLE _timescaledb_internal._hyper_21_1171_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_21_1174_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_21_1174_chunk (
+    CONSTRAINT constraint_1174 CHECK ((("time" >= '2026-01-17 22:25:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:26:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_ip_routes);
+
+
+ALTER TABLE _timescaledb_internal._hyper_21_1174_chunk OWNER TO postgres;
+
+--
+-- Name: _hyper_21_1177_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_21_1177_chunk (
+    CONSTRAINT constraint_1177 CHECK ((("time" >= '2026-01-17 22:26:00+03'::timestamp with time zone) AND ("time" < '2026-01-17 22:27:00+03'::timestamp with time zone)))
+)
+INHERITS (public.router_ip_routes);
+
+
+ALTER TABLE _timescaledb_internal._hyper_21_1177_chunk OWNER TO postgres;
+
+--
 -- Name: _materialized_hypertable_22; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
 --
 
@@ -164,6 +344,18 @@ CREATE TABLE _timescaledb_internal._materialized_hypertable_22 (
 
 
 ALTER TABLE _timescaledb_internal._materialized_hypertable_22 OWNER TO postgres;
+
+--
+-- Name: _hyper_22_1167_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_22_1167_chunk (
+    CONSTRAINT constraint_1167 CHECK (((bucket >= '2026-01-17 22:20:00+03'::timestamp with time zone) AND (bucket < '2026-01-17 22:30:00+03'::timestamp with time zone)))
+)
+INHERITS (_timescaledb_internal._materialized_hypertable_22);
+
+
+ALTER TABLE _timescaledb_internal._hyper_22_1167_chunk OWNER TO postgres;
 
 --
 -- Name: _materialized_hypertable_23; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
@@ -183,6 +375,18 @@ CREATE TABLE _timescaledb_internal._materialized_hypertable_23 (
 ALTER TABLE _timescaledb_internal._materialized_hypertable_23 OWNER TO postgres;
 
 --
+-- Name: _hyper_23_1166_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_23_1166_chunk (
+    CONSTRAINT constraint_1166 CHECK (((bucket >= '2026-01-17 22:20:00+03'::timestamp with time zone) AND (bucket < '2026-01-17 22:30:00+03'::timestamp with time zone)))
+)
+INHERITS (_timescaledb_internal._materialized_hypertable_23);
+
+
+ALTER TABLE _timescaledb_internal._hyper_23_1166_chunk OWNER TO postgres;
+
+--
 -- Name: _materialized_hypertable_24; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
 --
 
@@ -199,6 +403,18 @@ CREATE TABLE _timescaledb_internal._materialized_hypertable_24 (
 
 
 ALTER TABLE _timescaledb_internal._materialized_hypertable_24 OWNER TO postgres;
+
+--
+-- Name: _hyper_24_1168_chunk; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._hyper_24_1168_chunk (
+    CONSTRAINT constraint_1168 CHECK (((bucket >= '2026-01-17 22:20:00+03'::timestamp with time zone) AND (bucket < '2026-01-17 22:30:00+03'::timestamp with time zone)))
+)
+INHERITS (_timescaledb_internal._materialized_hypertable_24);
+
+
+ALTER TABLE _timescaledb_internal._hyper_24_1168_chunk OWNER TO postgres;
 
 --
 -- Name: _partial_view_22; Type: VIEW; Schema: _timescaledb_internal; Owner: postgres
@@ -345,6 +561,126 @@ ALTER TABLE ONLY public.devices ALTER COLUMN device_id SET DEFAULT nextval('publ
 
 
 --
+-- Name: _hyper_19_1160_chunk 1160_2084_router_snmp_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1160_chunk
+    ADD CONSTRAINT "1160_2084_router_snmp_pkey" PRIMARY KEY (device_id, "time");
+
+
+--
+-- Name: _hyper_20_1161_chunk 1161_2086_router_interface_metrics_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1161_chunk
+    ADD CONSTRAINT "1161_2086_router_interface_metrics_pkey" PRIMARY KEY (device_id, if_index, "time");
+
+
+--
+-- Name: _hyper_21_1162_chunk 1162_2088_router_ip_routes_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1162_chunk
+    ADD CONSTRAINT "1162_2088_router_ip_routes_pkey" PRIMARY KEY (device_id, "time", dest, mask, next_hop, if_index, route_type);
+
+
+--
+-- Name: _hyper_19_1163_chunk 1163_2090_router_snmp_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1163_chunk
+    ADD CONSTRAINT "1163_2090_router_snmp_pkey" PRIMARY KEY (device_id, "time");
+
+
+--
+-- Name: _hyper_20_1164_chunk 1164_2092_router_interface_metrics_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1164_chunk
+    ADD CONSTRAINT "1164_2092_router_interface_metrics_pkey" PRIMARY KEY (device_id, if_index, "time");
+
+
+--
+-- Name: _hyper_21_1165_chunk 1165_2094_router_ip_routes_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1165_chunk
+    ADD CONSTRAINT "1165_2094_router_ip_routes_pkey" PRIMARY KEY (device_id, "time", dest, mask, next_hop, if_index, route_type);
+
+
+--
+-- Name: _hyper_19_1169_chunk 1169_2096_router_snmp_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1169_chunk
+    ADD CONSTRAINT "1169_2096_router_snmp_pkey" PRIMARY KEY (device_id, "time");
+
+
+--
+-- Name: _hyper_20_1170_chunk 1170_2098_router_interface_metrics_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1170_chunk
+    ADD CONSTRAINT "1170_2098_router_interface_metrics_pkey" PRIMARY KEY (device_id, if_index, "time");
+
+
+--
+-- Name: _hyper_21_1171_chunk 1171_2100_router_ip_routes_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1171_chunk
+    ADD CONSTRAINT "1171_2100_router_ip_routes_pkey" PRIMARY KEY (device_id, "time", dest, mask, next_hop, if_index, route_type);
+
+
+--
+-- Name: _hyper_19_1172_chunk 1172_2102_router_snmp_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1172_chunk
+    ADD CONSTRAINT "1172_2102_router_snmp_pkey" PRIMARY KEY (device_id, "time");
+
+
+--
+-- Name: _hyper_20_1173_chunk 1173_2104_router_interface_metrics_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1173_chunk
+    ADD CONSTRAINT "1173_2104_router_interface_metrics_pkey" PRIMARY KEY (device_id, if_index, "time");
+
+
+--
+-- Name: _hyper_21_1174_chunk 1174_2106_router_ip_routes_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1174_chunk
+    ADD CONSTRAINT "1174_2106_router_ip_routes_pkey" PRIMARY KEY (device_id, "time", dest, mask, next_hop, if_index, route_type);
+
+
+--
+-- Name: _hyper_19_1175_chunk 1175_2108_router_snmp_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1175_chunk
+    ADD CONSTRAINT "1175_2108_router_snmp_pkey" PRIMARY KEY (device_id, "time");
+
+
+--
+-- Name: _hyper_20_1176_chunk 1176_2110_router_interface_metrics_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1176_chunk
+    ADD CONSTRAINT "1176_2110_router_interface_metrics_pkey" PRIMARY KEY (device_id, if_index, "time");
+
+
+--
+-- Name: _hyper_21_1177_chunk 1177_2112_router_ip_routes_pkey; Type: CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1177_chunk
+    ADD CONSTRAINT "1177_2112_router_ip_routes_pkey" PRIMARY KEY (device_id, "time", dest, mask, next_hop, if_index, route_type);
+
+
+--
 -- Name: devices devices_device_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -382,6 +718,307 @@ ALTER TABLE ONLY public.router_ip_routes
 
 ALTER TABLE ONLY public.router_snmp
     ADD CONSTRAINT router_snmp_pkey PRIMARY KEY (device_id, "time");
+
+
+--
+-- Name: _hyper_19_1160_chunk_idx_router_snmp_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1160_chunk_idx_router_snmp_device_time ON _timescaledb_internal._hyper_19_1160_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_19_1160_chunk_router_snmp_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1160_chunk_router_snmp_time_idx ON _timescaledb_internal._hyper_19_1160_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_19_1163_chunk_idx_router_snmp_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1163_chunk_idx_router_snmp_device_time ON _timescaledb_internal._hyper_19_1163_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_19_1163_chunk_router_snmp_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1163_chunk_router_snmp_time_idx ON _timescaledb_internal._hyper_19_1163_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_19_1169_chunk_idx_router_snmp_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1169_chunk_idx_router_snmp_device_time ON _timescaledb_internal._hyper_19_1169_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_19_1169_chunk_router_snmp_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1169_chunk_router_snmp_time_idx ON _timescaledb_internal._hyper_19_1169_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_19_1172_chunk_idx_router_snmp_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1172_chunk_idx_router_snmp_device_time ON _timescaledb_internal._hyper_19_1172_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_19_1172_chunk_router_snmp_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1172_chunk_router_snmp_time_idx ON _timescaledb_internal._hyper_19_1172_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_19_1175_chunk_idx_router_snmp_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1175_chunk_idx_router_snmp_device_time ON _timescaledb_internal._hyper_19_1175_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_19_1175_chunk_router_snmp_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_19_1175_chunk_router_snmp_time_idx ON _timescaledb_internal._hyper_19_1175_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_20_1161_chunk_idx_if_metrics_device_if_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1161_chunk_idx_if_metrics_device_if_time ON _timescaledb_internal._hyper_20_1161_chunk USING btree (device_id, if_index, "time" DESC);
+
+
+--
+-- Name: _hyper_20_1161_chunk_router_interface_metrics_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1161_chunk_router_interface_metrics_time_idx ON _timescaledb_internal._hyper_20_1161_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_20_1164_chunk_idx_if_metrics_device_if_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1164_chunk_idx_if_metrics_device_if_time ON _timescaledb_internal._hyper_20_1164_chunk USING btree (device_id, if_index, "time" DESC);
+
+
+--
+-- Name: _hyper_20_1164_chunk_router_interface_metrics_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1164_chunk_router_interface_metrics_time_idx ON _timescaledb_internal._hyper_20_1164_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_20_1170_chunk_idx_if_metrics_device_if_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1170_chunk_idx_if_metrics_device_if_time ON _timescaledb_internal._hyper_20_1170_chunk USING btree (device_id, if_index, "time" DESC);
+
+
+--
+-- Name: _hyper_20_1170_chunk_router_interface_metrics_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1170_chunk_router_interface_metrics_time_idx ON _timescaledb_internal._hyper_20_1170_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_20_1173_chunk_idx_if_metrics_device_if_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1173_chunk_idx_if_metrics_device_if_time ON _timescaledb_internal._hyper_20_1173_chunk USING btree (device_id, if_index, "time" DESC);
+
+
+--
+-- Name: _hyper_20_1173_chunk_router_interface_metrics_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1173_chunk_router_interface_metrics_time_idx ON _timescaledb_internal._hyper_20_1173_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_20_1176_chunk_idx_if_metrics_device_if_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1176_chunk_idx_if_metrics_device_if_time ON _timescaledb_internal._hyper_20_1176_chunk USING btree (device_id, if_index, "time" DESC);
+
+
+--
+-- Name: _hyper_20_1176_chunk_router_interface_metrics_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_20_1176_chunk_router_interface_metrics_time_idx ON _timescaledb_internal._hyper_20_1176_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_21_1162_chunk_idx_routes_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1162_chunk_idx_routes_device_time ON _timescaledb_internal._hyper_21_1162_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_21_1162_chunk_router_ip_routes_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1162_chunk_router_ip_routes_time_idx ON _timescaledb_internal._hyper_21_1162_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_21_1165_chunk_idx_routes_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1165_chunk_idx_routes_device_time ON _timescaledb_internal._hyper_21_1165_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_21_1165_chunk_router_ip_routes_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1165_chunk_router_ip_routes_time_idx ON _timescaledb_internal._hyper_21_1165_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_21_1171_chunk_idx_routes_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1171_chunk_idx_routes_device_time ON _timescaledb_internal._hyper_21_1171_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_21_1171_chunk_router_ip_routes_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1171_chunk_router_ip_routes_time_idx ON _timescaledb_internal._hyper_21_1171_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_21_1174_chunk_idx_routes_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1174_chunk_idx_routes_device_time ON _timescaledb_internal._hyper_21_1174_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_21_1174_chunk_router_ip_routes_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1174_chunk_router_ip_routes_time_idx ON _timescaledb_internal._hyper_21_1174_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_21_1177_chunk_idx_routes_device_time; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1177_chunk_idx_routes_device_time ON _timescaledb_internal._hyper_21_1177_chunk USING btree (device_id, "time" DESC);
+
+
+--
+-- Name: _hyper_21_1177_chunk_router_ip_routes_time_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_21_1177_chunk_router_ip_routes_time_idx ON _timescaledb_internal._hyper_21_1177_chunk USING btree ("time" DESC);
+
+
+--
+-- Name: _hyper_22_1167_chunk__materialized_hypertable_22_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_22_1167_chunk__materialized_hypertable_22_bucket_idx ON _timescaledb_internal._hyper_22_1167_chunk USING btree (bucket DESC);
+
+
+--
+-- Name: _hyper_22_1167_chunk__materialized_hypertable_22_device_id_buck; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_22_1167_chunk__materialized_hypertable_22_device_id_buck ON _timescaledb_internal._hyper_22_1167_chunk USING btree (device_id, bucket DESC);
+
+
+--
+-- Name: _hyper_23_1166_chunk__materialized_hypertable_23_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_23_1166_chunk__materialized_hypertable_23_bucket_idx ON _timescaledb_internal._hyper_23_1166_chunk USING btree (bucket DESC);
+
+
+--
+-- Name: _hyper_23_1166_chunk__materialized_hypertable_23_device_id_buck; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_23_1166_chunk__materialized_hypertable_23_device_id_buck ON _timescaledb_internal._hyper_23_1166_chunk USING btree (device_id, bucket DESC);
+
+
+--
+-- Name: _hyper_23_1166_chunk__materialized_hypertable_23_if_index_bucke; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_23_1166_chunk__materialized_hypertable_23_if_index_bucke ON _timescaledb_internal._hyper_23_1166_chunk USING btree (if_index, bucket DESC);
+
+
+--
+-- Name: _hyper_23_1166_chunk_idx_if_metrics_1m_device_if_bucket; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_23_1166_chunk_idx_if_metrics_1m_device_if_bucket ON _timescaledb_internal._hyper_23_1166_chunk USING btree (device_id, if_index, bucket DESC);
+
+
+--
+-- Name: _hyper_24_1168_chunk__materialized_hypertable_24_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_24_1168_chunk__materialized_hypertable_24_bucket_idx ON _timescaledb_internal._hyper_24_1168_chunk USING btree (bucket DESC);
+
+
+--
+-- Name: _hyper_24_1168_chunk__materialized_hypertable_24_dest_bucket_id; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_24_1168_chunk__materialized_hypertable_24_dest_bucket_id ON _timescaledb_internal._hyper_24_1168_chunk USING btree (dest, bucket DESC);
+
+
+--
+-- Name: _hyper_24_1168_chunk__materialized_hypertable_24_device_id_buck; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_24_1168_chunk__materialized_hypertable_24_device_id_buck ON _timescaledb_internal._hyper_24_1168_chunk USING btree (device_id, bucket DESC);
+
+
+--
+-- Name: _hyper_24_1168_chunk__materialized_hypertable_24_if_index_bucke; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_24_1168_chunk__materialized_hypertable_24_if_index_bucke ON _timescaledb_internal._hyper_24_1168_chunk USING btree (if_index, bucket DESC);
+
+
+--
+-- Name: _hyper_24_1168_chunk__materialized_hypertable_24_mask_bucket_id; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_24_1168_chunk__materialized_hypertable_24_mask_bucket_id ON _timescaledb_internal._hyper_24_1168_chunk USING btree (mask, bucket DESC);
+
+
+--
+-- Name: _hyper_24_1168_chunk__materialized_hypertable_24_next_hop_bucke; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_24_1168_chunk__materialized_hypertable_24_next_hop_bucke ON _timescaledb_internal._hyper_24_1168_chunk USING btree (next_hop, bucket DESC);
+
+
+--
+-- Name: _hyper_24_1168_chunk__materialized_hypertable_24_route_type_buc; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _hyper_24_1168_chunk__materialized_hypertable_24_route_type_buc ON _timescaledb_internal._hyper_24_1168_chunk USING btree (route_type, bucket DESC);
 
 
 --
@@ -532,6 +1169,126 @@ CREATE INDEX router_snmp_time_idx ON public.router_snmp USING btree ("time" DESC
 
 
 --
+-- Name: _hyper_19_1160_chunk 1160_2083_router_snmp_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1160_chunk
+    ADD CONSTRAINT "1160_2083_router_snmp_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_20_1161_chunk 1161_2085_router_interface_metrics_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1161_chunk
+    ADD CONSTRAINT "1161_2085_router_interface_metrics_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_21_1162_chunk 1162_2087_router_ip_routes_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1162_chunk
+    ADD CONSTRAINT "1162_2087_router_ip_routes_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_19_1163_chunk 1163_2089_router_snmp_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1163_chunk
+    ADD CONSTRAINT "1163_2089_router_snmp_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_20_1164_chunk 1164_2091_router_interface_metrics_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1164_chunk
+    ADD CONSTRAINT "1164_2091_router_interface_metrics_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_21_1165_chunk 1165_2093_router_ip_routes_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1165_chunk
+    ADD CONSTRAINT "1165_2093_router_ip_routes_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_19_1169_chunk 1169_2095_router_snmp_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1169_chunk
+    ADD CONSTRAINT "1169_2095_router_snmp_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_20_1170_chunk 1170_2097_router_interface_metrics_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1170_chunk
+    ADD CONSTRAINT "1170_2097_router_interface_metrics_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_21_1171_chunk 1171_2099_router_ip_routes_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1171_chunk
+    ADD CONSTRAINT "1171_2099_router_ip_routes_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_19_1172_chunk 1172_2101_router_snmp_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1172_chunk
+    ADD CONSTRAINT "1172_2101_router_snmp_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_20_1173_chunk 1173_2103_router_interface_metrics_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1173_chunk
+    ADD CONSTRAINT "1173_2103_router_interface_metrics_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_21_1174_chunk 1174_2105_router_ip_routes_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1174_chunk
+    ADD CONSTRAINT "1174_2105_router_ip_routes_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_19_1175_chunk 1175_2107_router_snmp_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_19_1175_chunk
+    ADD CONSTRAINT "1175_2107_router_snmp_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_20_1176_chunk 1176_2109_router_interface_metrics_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_20_1176_chunk
+    ADD CONSTRAINT "1176_2109_router_interface_metrics_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
+-- Name: _hyper_21_1177_chunk 1177_2111_router_ip_routes_device_id_fkey; Type: FK CONSTRAINT; Schema: _timescaledb_internal; Owner: postgres
+--
+
+ALTER TABLE ONLY _timescaledb_internal._hyper_21_1177_chunk
+    ADD CONSTRAINT "1177_2111_router_ip_routes_device_id_fkey" FOREIGN KEY (device_id) REFERENCES public.devices(device_id) ON DELETE CASCADE;
+
+
+--
 -- Name: router_interface_metrics router_interface_metrics_device_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -559,5 +1316,5 @@ ALTER TABLE ONLY public.router_snmp
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8goTTb8TiJeyn2gDz5bjPuwJNukRfXUPF4zM0jcsQleqMPL7fE3rcheBqSAfN8n
+\unrestrict SHzaX8WHGbccMwEjORKjoxX4wDgolgMFvuxoUBzmknWVY1XMirgIWbVcTJkY0iP
 

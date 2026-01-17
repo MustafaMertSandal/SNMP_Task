@@ -58,6 +58,8 @@ func main() {
 		go pollLoop(ctx, 10*time.Second, cfg, v, store)
 	}
 
+	go getQueries(ctx, 10*time.Second, store)
+
 	fmt.Println("Polling started. Press Ctrl+C to stop.")
 	<-sigCh // burada sen kapatana kadar bekler
 	fmt.Println("\nStopping...")
@@ -69,6 +71,7 @@ func main() {
 
 /* ---------------- Goroutine ---------------- */
 
+// *----------------- Poll --------------------*//
 func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig, store *db.Store) error {
 	fmt.Println("[Target]")
 	fmt.Printf("	-Name: %s\n	Address: %s:%d\n\n", trgt.Name, trgt.Address, trgt.Port)
@@ -201,6 +204,45 @@ func pollLoop(ctx context.Context, wait time.Duration, cfg *config.Config, trgt 
 		case <-ticker.C:
 			if err := pollOnce(ctx, cfg, trgt, store); err != nil {
 				fmt.Println("poll error:", err)
+			}
+		}
+	}
+}
+
+// * --------------- Query ----------------- *//
+func getQueries(ctx context.Context, wait time.Duration, store *db.Store) {
+	ticker := time.NewTicker(wait)
+	defer ticker.Stop()
+
+	//Program başlar başlamaz 1 kere poll:
+	datas, err := store.GetRouterSNMP1mAllByDeviceID(ctx, 1)
+	if err != nil {
+		fmt.Println("Query error:", err)
+	}
+
+	for _, v := range datas {
+		fmt.Println("***************************[System]**************************")
+		fmt.Printf("	sysName   : %s\n", v.SysName)
+		fmt.Printf("	sysUpTime : %d (TimeTicks)\n", v.SysUptimeCS)
+		fmt.Printf("	sysDescr  : %s\n", v.SysDescr)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("pollLoop stopped:", ctx.Err())
+			return
+		case <-ticker.C:
+			datas, err := store.GetRouterSNMP1mAllByDeviceID(ctx, 1)
+			if err != nil {
+				fmt.Println("Query error:", err)
+			}
+
+			for _, v := range datas {
+				fmt.Println("***************************[System]**************************")
+				fmt.Printf("	sysName   : %s\n", v.SysName)
+				fmt.Printf("	sysUpTime : %d (TimeTicks)\n", v.SysUptimeCS)
+				fmt.Printf("	sysDescr  : %s\n", v.SysDescr)
 			}
 		}
 	}
