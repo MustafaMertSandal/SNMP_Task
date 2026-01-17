@@ -53,6 +53,7 @@ func main() {
 		defer store.Close()
 	}
 
+	// Her bir target için bir tane goroutine başlatalım.
 	for _, v := range cfg.Targets {
 		go pollLoop(ctx, 10*time.Second, cfg, v, store)
 	}
@@ -183,8 +184,8 @@ func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig,
 	return nil
 }
 
-func pollLoop(ctx context.Context, interval time.Duration, cfg *config.Config, trgt config.TargetConfig, store *db.Store) {
-	ticker := time.NewTicker(interval)
+func pollLoop(ctx context.Context, wait time.Duration, cfg *config.Config, trgt config.TargetConfig, store *db.Store) {
+	ticker := time.NewTicker(wait)
 	defer ticker.Stop()
 
 	//Program başlar başlamaz 1 kere poll:

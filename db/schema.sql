@@ -14,7 +14,7 @@ pg_dump: hint: Consider using a full dump instead of a --data-only dump to avoid
 -- PostgreSQL database dump
 --
 
-\restrict A9iIdwACkWawm0mnbgv0VF02jKxIPQo7Hqt62JL8ZbExrNIgTNIpixpLS7iweRe
+\restrict 8goTTb8TiJeyn2gDz5bjPuwJNukRfXUPF4zM0jcsQleqMPL7fE3rcheBqSAfN8n
 
 -- Dumped from database version 16.11
 -- Dumped by pg_dump version 16.11
@@ -47,6 +47,211 @@ COMMENT ON EXTENSION timescaledb IS 'Enables scalable inserts and complex querie
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: router_snmp; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.router_snmp (
+    "time" timestamp with time zone NOT NULL,
+    device_id bigint NOT NULL,
+    sys_name text NOT NULL,
+    sys_uptime_cs bigint NOT NULL,
+    sys_descr text NOT NULL
+);
+
+
+ALTER TABLE public.router_snmp OWNER TO postgres;
+
+--
+-- Name: _direct_view_22; Type: VIEW; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE VIEW _timescaledb_internal._direct_view_22 AS
+ SELECT public.time_bucket('00:01:00'::interval, "time") AS bucket,
+    device_id,
+    public.last(sys_name, "time") AS sys_name,
+    public.last(sys_uptime_cs, "time") AS sys_uptime_cs,
+    public.last(sys_descr, "time") AS sys_descr
+   FROM public.router_snmp
+  GROUP BY (public.time_bucket('00:01:00'::interval, "time")), device_id;
+
+
+ALTER VIEW _timescaledb_internal._direct_view_22 OWNER TO postgres;
+
+--
+-- Name: router_interface_metrics; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.router_interface_metrics (
+    "time" timestamp with time zone NOT NULL,
+    device_id bigint NOT NULL,
+    if_index integer NOT NULL,
+    if_descr text NOT NULL,
+    if_oper_status smallint NOT NULL,
+    if_in_octets bigint NOT NULL,
+    if_out_octets bigint NOT NULL
+);
+
+
+ALTER TABLE public.router_interface_metrics OWNER TO postgres;
+
+--
+-- Name: _direct_view_23; Type: VIEW; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE VIEW _timescaledb_internal._direct_view_23 AS
+ SELECT public.time_bucket('00:01:00'::interval, "time") AS bucket,
+    device_id,
+    if_index,
+    public.last(if_descr, "time") AS if_descr,
+    public.last(if_oper_status, "time") AS if_oper_status,
+    public.last(if_in_octets, "time") AS if_in_octets,
+    public.last(if_out_octets, "time") AS if_out_octets
+   FROM public.router_interface_metrics
+  GROUP BY (public.time_bucket('00:01:00'::interval, "time")), device_id, if_index;
+
+
+ALTER VIEW _timescaledb_internal._direct_view_23 OWNER TO postgres;
+
+--
+-- Name: router_ip_routes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.router_ip_routes (
+    "time" timestamp with time zone NOT NULL,
+    device_id bigint NOT NULL,
+    dest inet NOT NULL,
+    mask inet NOT NULL,
+    next_hop inet NOT NULL,
+    if_index integer NOT NULL,
+    route_type smallint NOT NULL
+);
+
+
+ALTER TABLE public.router_ip_routes OWNER TO postgres;
+
+--
+-- Name: _direct_view_24; Type: VIEW; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE VIEW _timescaledb_internal._direct_view_24 AS
+ SELECT public.time_bucket('00:01:00'::interval, "time") AS bucket,
+    device_id,
+    dest,
+    mask,
+    next_hop,
+    if_index,
+    route_type,
+    public.last("time", "time") AS last_seen_time
+   FROM public.router_ip_routes
+  GROUP BY (public.time_bucket('00:01:00'::interval, "time")), device_id, dest, mask, next_hop, if_index, route_type;
+
+
+ALTER VIEW _timescaledb_internal._direct_view_24 OWNER TO postgres;
+
+--
+-- Name: _materialized_hypertable_22; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._materialized_hypertable_22 (
+    bucket timestamp with time zone NOT NULL,
+    device_id bigint,
+    sys_name text,
+    sys_uptime_cs bigint,
+    sys_descr text
+);
+
+
+ALTER TABLE _timescaledb_internal._materialized_hypertable_22 OWNER TO postgres;
+
+--
+-- Name: _materialized_hypertable_23; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._materialized_hypertable_23 (
+    bucket timestamp with time zone NOT NULL,
+    device_id bigint,
+    if_index integer,
+    if_descr text,
+    if_oper_status smallint,
+    if_in_octets bigint,
+    if_out_octets bigint
+);
+
+
+ALTER TABLE _timescaledb_internal._materialized_hypertable_23 OWNER TO postgres;
+
+--
+-- Name: _materialized_hypertable_24; Type: TABLE; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE TABLE _timescaledb_internal._materialized_hypertable_24 (
+    bucket timestamp with time zone NOT NULL,
+    device_id bigint,
+    dest inet,
+    mask inet,
+    next_hop inet,
+    if_index integer,
+    route_type smallint,
+    last_seen_time timestamp with time zone
+);
+
+
+ALTER TABLE _timescaledb_internal._materialized_hypertable_24 OWNER TO postgres;
+
+--
+-- Name: _partial_view_22; Type: VIEW; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE VIEW _timescaledb_internal._partial_view_22 AS
+ SELECT public.time_bucket('00:01:00'::interval, "time") AS bucket,
+    device_id,
+    public.last(sys_name, "time") AS sys_name,
+    public.last(sys_uptime_cs, "time") AS sys_uptime_cs,
+    public.last(sys_descr, "time") AS sys_descr
+   FROM public.router_snmp
+  GROUP BY (public.time_bucket('00:01:00'::interval, "time")), device_id;
+
+
+ALTER VIEW _timescaledb_internal._partial_view_22 OWNER TO postgres;
+
+--
+-- Name: _partial_view_23; Type: VIEW; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE VIEW _timescaledb_internal._partial_view_23 AS
+ SELECT public.time_bucket('00:01:00'::interval, "time") AS bucket,
+    device_id,
+    if_index,
+    public.last(if_descr, "time") AS if_descr,
+    public.last(if_oper_status, "time") AS if_oper_status,
+    public.last(if_in_octets, "time") AS if_in_octets,
+    public.last(if_out_octets, "time") AS if_out_octets
+   FROM public.router_interface_metrics
+  GROUP BY (public.time_bucket('00:01:00'::interval, "time")), device_id, if_index;
+
+
+ALTER VIEW _timescaledb_internal._partial_view_23 OWNER TO postgres;
+
+--
+-- Name: _partial_view_24; Type: VIEW; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE VIEW _timescaledb_internal._partial_view_24 AS
+ SELECT public.time_bucket('00:01:00'::interval, "time") AS bucket,
+    device_id,
+    dest,
+    mask,
+    next_hop,
+    if_index,
+    route_type,
+    public.last("time", "time") AS last_seen_time
+   FROM public.router_ip_routes
+  GROUP BY (public.time_bucket('00:01:00'::interval, "time")), device_id, dest, mask, next_hop, if_index, route_type;
+
+
+ALTER VIEW _timescaledb_internal._partial_view_24 OWNER TO postgres;
 
 --
 -- Name: devices; Type: TABLE; Schema: public; Owner: postgres
@@ -83,53 +288,54 @@ ALTER SEQUENCE public.devices_device_id_seq OWNED BY public.devices.device_id;
 
 
 --
--- Name: router_interface_metrics; Type: TABLE; Schema: public; Owner: postgres
+-- Name: router_interface_metrics_1m; Type: VIEW; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.router_interface_metrics (
-    "time" timestamp with time zone NOT NULL,
-    device_id bigint NOT NULL,
-    if_index integer NOT NULL,
-    if_descr text NOT NULL,
-    if_oper_status smallint NOT NULL,
-    if_in_octets bigint NOT NULL,
-    if_out_octets bigint NOT NULL
-);
+CREATE VIEW public.router_interface_metrics_1m AS
+ SELECT bucket,
+    device_id,
+    if_index,
+    if_descr,
+    if_oper_status,
+    if_in_octets,
+    if_out_octets
+   FROM _timescaledb_internal._materialized_hypertable_23;
 
 
-ALTER TABLE public.router_interface_metrics OWNER TO postgres;
-
---
--- Name: router_ip_routes; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.router_ip_routes (
-    "time" timestamp with time zone NOT NULL,
-    device_id bigint NOT NULL,
-    dest inet NOT NULL,
-    mask inet NOT NULL,
-    next_hop inet NOT NULL,
-    if_index integer NOT NULL,
-    route_type smallint NOT NULL
-);
-
-
-ALTER TABLE public.router_ip_routes OWNER TO postgres;
+ALTER VIEW public.router_interface_metrics_1m OWNER TO postgres;
 
 --
--- Name: router_snmp; Type: TABLE; Schema: public; Owner: postgres
+-- Name: router_ip_routes_1m; Type: VIEW; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.router_snmp (
-    "time" timestamp with time zone NOT NULL,
-    device_id bigint NOT NULL,
-    sys_name text NOT NULL,
-    sys_uptime_cs bigint NOT NULL,
-    sys_descr text NOT NULL
-);
+CREATE VIEW public.router_ip_routes_1m AS
+ SELECT bucket,
+    device_id,
+    dest,
+    mask,
+    next_hop,
+    if_index,
+    route_type,
+    last_seen_time
+   FROM _timescaledb_internal._materialized_hypertable_24;
 
 
-ALTER TABLE public.router_snmp OWNER TO postgres;
+ALTER VIEW public.router_ip_routes_1m OWNER TO postgres;
+
+--
+-- Name: router_snmp_1m; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.router_snmp_1m AS
+ SELECT bucket,
+    device_id,
+    sys_name,
+    sys_uptime_cs,
+    sys_descr
+   FROM _timescaledb_internal._materialized_hypertable_22;
+
+
+ALTER VIEW public.router_snmp_1m OWNER TO postgres;
 
 --
 -- Name: devices device_id; Type: DEFAULT; Schema: public; Owner: postgres
@@ -176,6 +382,111 @@ ALTER TABLE ONLY public.router_ip_routes
 
 ALTER TABLE ONLY public.router_snmp
     ADD CONSTRAINT router_snmp_pkey PRIMARY KEY (device_id, "time");
+
+
+--
+-- Name: _materialized_hypertable_22_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_22_bucket_idx ON _timescaledb_internal._materialized_hypertable_22 USING btree (bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_22_device_id_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_22_device_id_bucket_idx ON _timescaledb_internal._materialized_hypertable_22 USING btree (device_id, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_23_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_23_bucket_idx ON _timescaledb_internal._materialized_hypertable_23 USING btree (bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_23_device_id_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_23_device_id_bucket_idx ON _timescaledb_internal._materialized_hypertable_23 USING btree (device_id, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_23_if_index_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_23_if_index_bucket_idx ON _timescaledb_internal._materialized_hypertable_23 USING btree (if_index, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_24_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_24_bucket_idx ON _timescaledb_internal._materialized_hypertable_24 USING btree (bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_24_dest_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_24_dest_bucket_idx ON _timescaledb_internal._materialized_hypertable_24 USING btree (dest, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_24_device_id_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_24_device_id_bucket_idx ON _timescaledb_internal._materialized_hypertable_24 USING btree (device_id, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_24_if_index_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_24_if_index_bucket_idx ON _timescaledb_internal._materialized_hypertable_24 USING btree (if_index, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_24_mask_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_24_mask_bucket_idx ON _timescaledb_internal._materialized_hypertable_24 USING btree (mask, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_24_next_hop_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_24_next_hop_bucket_idx ON _timescaledb_internal._materialized_hypertable_24 USING btree (next_hop, bucket DESC);
+
+
+--
+-- Name: _materialized_hypertable_24_route_type_bucket_idx; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX _materialized_hypertable_24_route_type_bucket_idx ON _timescaledb_internal._materialized_hypertable_24 USING btree (route_type, bucket DESC);
+
+
+--
+-- Name: idx_if_metrics_1m_device_if_bucket; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX idx_if_metrics_1m_device_if_bucket ON _timescaledb_internal._materialized_hypertable_23 USING btree (device_id, if_index, bucket DESC);
+
+
+--
+-- Name: idx_router_snmp_1m_device_bucket; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX idx_router_snmp_1m_device_bucket ON _timescaledb_internal._materialized_hypertable_22 USING btree (device_id, bucket DESC);
+
+
+--
+-- Name: idx_routes_1m_device_bucket; Type: INDEX; Schema: _timescaledb_internal; Owner: postgres
+--
+
+CREATE INDEX idx_routes_1m_device_bucket ON _timescaledb_internal._materialized_hypertable_24 USING btree (device_id, bucket DESC);
 
 
 --
@@ -248,5 +559,5 @@ ALTER TABLE ONLY public.router_snmp
 -- PostgreSQL database dump complete
 --
 
-\unrestrict A9iIdwACkWawm0mnbgv0VF02jKxIPQo7Hqt62JL8ZbExrNIgTNIpixpLS7iweRe
+\unrestrict 8goTTb8TiJeyn2gDz5bjPuwJNukRfXUPF4zM0jcsQleqMPL7fE3rcheBqSAfN8n
 
