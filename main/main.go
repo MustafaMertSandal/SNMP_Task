@@ -14,6 +14,7 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
+	"github.com/MustafaMertSandal/SNMP_Task/frontend"
 	"github.com/MustafaMertSandal/SNMP_Task/internal/config"
 	"github.com/MustafaMertSandal/SNMP_Task/internal/convert"
 	"github.com/MustafaMertSandal/SNMP_Task/internal/db"
@@ -58,7 +59,12 @@ func main() {
 		go pollLoop(ctx, 10*time.Second, cfg, v, store)
 	}
 
-	go getQueries(ctx, 10*time.Second, store)
+	// UI + API server (default :8080)
+	if _, err := frontend.StartWebServer(ctx, cfg, store); err != nil {
+		log.Fatalf("web server start error: %v", err)
+	}
+
+	fmt.Println("Polling + Web UI started. Open http://localhost" + cfg.Web.Addr)
 
 	fmt.Println("Polling started. Press Ctrl+C to stop.")
 	<-sigCh // burada sen kapatana kadar bekler
@@ -73,8 +79,6 @@ func main() {
 
 // *----------------- Poll --------------------*//
 func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig, store *db.Store) error {
-	fmt.Println("[Target]")
-	fmt.Printf("	-Name: %s\n	Address: %s:%d\n\n", trgt.Name, trgt.Address, trgt.Port)
 
 	// SNMP icin client tanimlama
 	client, err := snmp.New(cfg, trgt)
@@ -93,7 +97,6 @@ func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig,
 		if err != nil {
 			log.Fatalf("db ensure device error: %v", err)
 		}
-		log.Printf("[DB] connected, device_id=%d (device_name=%q)", deviceID, trgt.Name)
 	}
 
 	pollTime := time.Now().UTC()
@@ -105,11 +108,6 @@ func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig,
 		if err != nil {
 			log.Printf("[System] collect error: %v", err)
 		} else {
-			fmt.Println("[System]")
-			fmt.Printf("	sysName   : %s\n", sysName)
-			fmt.Printf("	sysUpTime : %d (TimeTicks)\n", uptime)
-			fmt.Printf("	sysDescr  : %s\n", sysDescr)
-
 			if store != nil {
 				if err := store.InsertRouterSNMP(ctx, pollTime, deviceID, sysName, int64(uptime), sysDescr); err != nil {
 					log.Printf("[DB] insert router_snmp error: %v", err)
@@ -125,12 +123,6 @@ func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig,
 		if err != nil {
 			log.Printf("[Interfaces] collect error: %v", err)
 		} else {
-			fmt.Println("[Interfaces]")
-			for _, r := range ifRows {
-				fmt.Printf("	ifIndex=%d descr=%q oper=%s inOctets=%d outOctets=%d\n",
-					r.Index, r.Descr, convert.OperStatusText(r.OperStatus), r.InOctets, r.OutOctets)
-			}
-
 			if store != nil {
 				metrics := make([]db.IfMetric, 0, len(ifRows))
 				for _, r := range ifRows {
@@ -155,12 +147,6 @@ func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig,
 		if err != nil {
 			log.Printf("[IP Routes] collect error: %v", err)
 		} else {
-			fmt.Println("[IP Routes]")
-			for _, r := range routes {
-				fmt.Printf("	dest=%s mask=%s nextHop=%s ifIndex=%d type=%s\n",
-					r.Dest, r.Mask, r.NextHop, r.IfIndex, convert.RouteTypeText(r.Type))
-			}
-
 			if store != nil {
 				dbRoutes := make([]db.RouteRow, 0, len(routes))
 				for _, r := range routes {
@@ -183,7 +169,6 @@ func pollOnce(ctx context.Context, cfg *config.Config, trgt config.TargetConfig,
 		}
 	}
 	client.Close()
-	fmt.Println("polling at:", time.Now().Format(time.RFC3339))
 	return nil
 }
 
@@ -204,45 +189,6 @@ func pollLoop(ctx context.Context, wait time.Duration, cfg *config.Config, trgt 
 		case <-ticker.C:
 			if err := pollOnce(ctx, cfg, trgt, store); err != nil {
 				fmt.Println("poll error:", err)
-			}
-		}
-	}
-}
-
-// * --------------- Query ----------------- *//
-func getQueries(ctx context.Context, wait time.Duration, store *db.Store) {
-	ticker := time.NewTicker(wait)
-	defer ticker.Stop()
-
-	//Program başlar başlamaz 1 kere poll:
-	datas, err := store.GetRouterSNMP1mAllByDeviceID(ctx, 1)
-	if err != nil {
-		fmt.Println("Query error:", err)
-	}
-
-	for _, v := range datas {
-		fmt.Println("***************************[System]**************************")
-		fmt.Printf("	sysName   : %s\n", v.SysName)
-		fmt.Printf("	sysUpTime : %d (TimeTicks)\n", v.SysUptimeCS)
-		fmt.Printf("	sysDescr  : %s\n", v.SysDescr)
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			fmt.Println("pollLoop stopped:", ctx.Err())
-			return
-		case <-ticker.C:
-			datas, err := store.GetRouterSNMP1mAllByDeviceID(ctx, 1)
-			if err != nil {
-				fmt.Println("Query error:", err)
-			}
-
-			for _, v := range datas {
-				fmt.Println("***************************[System]**************************")
-				fmt.Printf("	sysName   : %s\n", v.SysName)
-				fmt.Printf("	sysUpTime : %d (TimeTicks)\n", v.SysUptimeCS)
-				fmt.Printf("	sysDescr  : %s\n", v.SysDescr)
 			}
 		}
 	}

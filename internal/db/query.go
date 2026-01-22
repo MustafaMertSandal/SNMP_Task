@@ -58,6 +58,34 @@ func (s *Store) GetDeviceByID(ctx context.Context, deviceID int64) (Device, erro
 	return d, err
 }
 
+// Tum cihazlari listeler.
+func (s *Store) ListDevices(ctx context.Context) ([]Device, error) {
+	const q = `
+	SELECT device_id, device_name, created_at
+	FROM devices
+	ORDER BY device_id ASC;
+	`
+
+	rows, err := s.pool.Query(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("query devices: %w", err)
+	}
+	defer rows.Close()
+
+	out := make([]Device, 0, 32)
+	for rows.Next() {
+		var d Device
+		if err := rows.Scan(&d.DeviceID, &d.DeviceName, &d.CreatedAt); err != nil {
+			return nil, fmt.Errorf("scan devices: %w", err)
+		}
+		out = append(out, d)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows devices: %w", err)
+	}
+	return out, nil
+}
+
 // ---- Router_snmp ----
 
 // Device_id için en güncel downsample edilmiş satırları döner.
@@ -160,9 +188,9 @@ func (s *Store) GetRouterIPRoutes1mAllByDeviceID(ctx context.Context, deviceID i
 		SELECT
 			bucket,
 			device_id,
-			dest,
-			mask,
-			next_hop,
+			dest::text      AS dest,
+			mask::text      AS mask,
+  			next_hop::text  AS next_hop,
 			if_index,
 			route_type,
 			last_seen_time

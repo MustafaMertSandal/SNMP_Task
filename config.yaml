@@ -1,3 +1,6 @@
+web:
+  enabled: true
+  addr: ":8080"
 
 snmp:
   version: "2c"

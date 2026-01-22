@@ -43,6 +43,13 @@ type Config struct {
 	OIDs OIDs `yaml:"oids"`
 
 	Database DatabaseConfig `yaml:"database"`
+
+	Web WebConfig `yaml:"web"`
+}
+
+type WebConfig struct {
+	Enabled *bool  `yaml:"enabled"`
+	Addr    string `yaml:"addr"` // ":8080"
 }
 
 type TargetConfig struct {

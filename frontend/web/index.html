@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SNMP Task Dashboard</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:24px;line-height:1.35}
+    h1{margin:0 0 12px 0;font-size:22px}
+    .muted{color:#666;font-size:13px;margin-bottom:16px}
+    details{border:1px solid #ddd;border-radius:12px;padding:10px 12px;margin:10px 0;background:#fff}
+    summary{cursor:pointer;font-weight:600}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
+    .card{border:1px solid #eee;border-radius:12px;padding:10px 12px;background:#fafafa}
+    .card h3{margin:0 0 8px 0;font-size:15px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border-bottom:1px solid #e8e8e8;padding:6px 6px;text-align:left;vertical-align:top}
+    th{font-weight:600;color:#444}
+    .err{color:#b00020;font-size:13px;margin-top:8px}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#eee;font-size:12px;margin-left:6px;color:#444}
+  </style>
+</head>
+<body>
+  <h1>Devices</h1>
+  <div class="muted">
+    Click a device to load its latest data from TimescaleDB. 
+    <br>
+    First run: Wait 2-3 minutes for the data to load and refresh.
+  </div>
+
+  <div id="app">Loading...</div>
+
+<script>
+  const app = document.getElementById('app');
+
+  /* "<script>alert(1)<script> gibi kötü niyetli girdileri engeller */ 
+  function esc(s){
+    return String(s)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#39;');
+  }
+
+  async function fetchJSON(url){
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' }});
+    if (!r.ok) {
+      const t = await r.text().catch(()=> '');
+      throw new Error(`${r.status} ${r.statusText}${t ? ` - ${t}` : ''}`);
+    }
+    return r.json();
+  }
+
+  function table(headers, rows){
+    const th = headers.map(h => `<th>${esc(h)}</th>`).join('');
+    const tr = rows.map(row => `<tr>${row.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+    return `<table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table>`;
+  }
+
+  function renderDevice(device){
+    const id = device.device_id ?? device.DeviceID;
+    const name = device.device_name ?? device.DeviceName;
+    return `
+      <details data-device-id="${esc(id)}">
+        <summary>${esc(name)} <span class="pill">id: ${esc(id)}</span></summary>
+        <div class="grid">
+          <div class="card" data-box="snmp"><h3>System</h3><div class="muted">Loading...</div></div>
+          <div class="card" data-box="if"><h3>Interfaces</h3><div class="muted">Loading...</div></div>
+          <div class="card" data-box="routes"><h3>IP Routes</h3><div class="muted">Loading...</div></div>
+        </div>
+        <div class="err" data-err></div>
+      </details>
+    `;
+  }
+
+  async function loadDevice(detailsEl){
+    const id = detailsEl.getAttribute('data-device-id');
+    const errEl = detailsEl.querySelector('[data-err]');
+    errEl.textContent = '';
+
+    const boxSNMP = detailsEl.querySelector('[data-box="snmp"]');
+    const boxIF = detailsEl.querySelector('[data-box="if"]');
+    const boxRoutes = detailsEl.querySelector('[data-box="routes"]');
+
+    const setLoading = (box) => box.innerHTML = box.querySelector('h3').outerHTML + '<div class="muted">Loading...</div>';
+    setLoading(boxSNMP); setLoading(boxIF); setLoading(boxRoutes);
+
+    try {
+      const [snmp, ifs, routes] = await Promise.all([
+        fetchJSON(`/api/devices/${id}/snmp`),
+        fetchJSON(`/api/devices/${id}/interfaces`),
+        fetchJSON(`/api/devices/${id}/routes`),
+      ]);
+
+      // SNMP
+      const snmpRows = (snmp || []).map(r => [
+        r.bucket || r.Bucket,
+        r.sys_name || r.SysName,
+        r.sys_uptime_cs || r.SysUptimeCS,
+        r.sys_descr || r.SysDescr,
+      ]);
+      boxSNMP.innerHTML = boxSNMP.querySelector('h3').outerHTML + (snmpRows.length
+        ? table(['bucket','sys_name','sys_uptime_cs','sys_descr'], snmpRows)
+        : '<div class="muted">No data.</div>');
+
+      // Interfaces
+      const ifRows = (ifs || []).map(r => [
+        r.bucket || r.Bucket,
+        r.if_index || r.IfIndex,
+        r.if_descr || r.IfDescr,
+        r.if_oper_status || r.IfOperStatus,
+        r.if_in_octets || r.IfInOctets,
+        r.if_out_octets || r.IfOutOctets,
+      ]);
+      boxIF.innerHTML = boxIF.querySelector('h3').outerHTML + (ifRows.length
+        ? table(['bucket','if_index','if_descr','if_oper_status','if_in_octets','if_out_octets'], ifRows)
+        : '<div class="muted">No data.</div>');
+
+      // Routes
+      const rtRows = (routes || []).map(r => [
+        r.bucket || r.Bucket,
+        r.dest || r.Dest,
+        r.mask || r.Mask,
+        r.next_hop || r.NextHop,
+        r.if_index || r.IfIndex,
+        r.route_type || r.RouteType,
+        r.last_seen_time || r.LastSeenTime,
+      ]);
+      boxRoutes.innerHTML = boxRoutes.querySelector('h3').outerHTML + (rtRows.length
+        ? table(['bucket','dest','mask','next_hop','if_index','route_type','last_seen_time'], rtRows)
+        : '<div class="muted">No data.</div>');
+
+    } catch (e) {
+      errEl.textContent = e.message || String(e);
+      boxSNMP.innerHTML = boxSNMP.querySelector('h3').outerHTML + '<div class="muted">Failed to load.</div>';
+      boxIF.innerHTML = boxIF.querySelector('h3').outerHTML + '<div class="muted">Failed to load.</div>';
+      boxRoutes.innerHTML = boxRoutes.querySelector('h3').outerHTML + '<div class="muted">Failed to load.</div>';
+    }
+  }
+
+  async function init(){
+    try {
+      const devices = await fetchJSON('/api/devices');
+      if (!devices || devices.length === 0){
+        app.innerHTML = '<div class="muted">No devices found in DB.</div>';
+        return;
+      }
+      app.innerHTML = devices.map(renderDevice).join('');
+
+      // load on toggle open (only first open)
+      app.querySelectorAll('details').forEach(d => {
+        d.addEventListener('toggle', () => {
+          if (d.open && d.dataset.loaded !== '1') loadDevice(d);
+        });
+      });
+    } catch (e) {
+      app.innerHTML = `<div class="err">Failed to load devices: ${esc(e.message || String(e))}</div>`;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
