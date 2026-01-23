@@ -1,0 +1,316 @@
+openapi: 3.0.3
+info:
+  title: SNMP Task API
+  version: "1.0.0"
+  description: |
+    GNS3 ortamındaki cihazlardan SNMP ile toplanan verileri TimescaleDB'den okuyan basit REST API.
+    Not: Bu projede JSON alan adları Go struct field isimleriyle (DeviceID gibi) dönmektedir.
+servers:
+  - url: http://localhost:8080
+    description: Local dev server (portu kendi cfg.Web.Addr'ına göre değiştir)
+
+tags:
+  - name: Devices
+  - name: Metrics
+
+paths:
+  /api/devices:
+    get:
+      tags: [Devices]
+      summary: List devices
+      description: devices tablosundaki tüm cihazları listeler.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Device"
+              examples:
+                sample:
+                  value:
+                    - DeviceID: 1
+                      DeviceName: R1
+                      CreatedAt: "2026-01-10T10:00:00Z"
+                    - DeviceID: 2
+                      DeviceName: R2
+                      CreatedAt: "2026-01-10T10:00:05Z"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "503":
+          $ref: "#/components/responses/DatabaseDisabled"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/devices/{device_id}/snmp:
+    get:
+      tags: [Metrics]
+      summary: Get downsampled SNMP system metrics (1m)
+      description: router_snmp_1m continuous aggregate verisini döner.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RouterSNMP"
+        "400":
+          $ref: "#/components/responses/InvalidDeviceId"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "503":
+          $ref: "#/components/responses/DatabaseDisabledLowercase"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/devices/{device_id}/interfaces:
+    get:
+      tags: [Metrics]
+      summary: Get downsampled interface metrics (1m)
+      description: router_interface_metrics_1m continuous aggregate verisini döner.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RouterInterfaceMetric"
+        "400":
+          $ref: "#/components/responses/InvalidDeviceId"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "503":
+          $ref: "#/components/responses/DatabaseDisabledLowercase"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/devices/{device_id}/routes:
+    get:
+      tags: [Metrics]
+      summary: Get downsampled IP routes (1m)
+      description: router_ip_routes_1m continuous aggregate verisini döner.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RouterIPRoute"
+        "400":
+          $ref: "#/components/responses/InvalidDeviceId"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "503":
+          $ref: "#/components/responses/DatabaseDisabledLowercase"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  parameters:
+    DeviceId:
+      name: device_id
+      in: path
+      required: true
+      description: Cihaz ID (devices.device_id)
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 1
+
+  responses:
+    InvalidDeviceId:
+      description: Invalid device id
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            sample:
+              value: invalid device id
+
+    NotFound:
+      description: Not found
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            sample:
+              value: Not Found
+
+    MethodNotAllowed:
+      description: Method not allowed
+      headers:
+        Allow:
+          description: Allowed HTTP methods
+          schema:
+            type: string
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            sample:
+              value: Method not allowed
+
+    DatabaseDisabled:
+      description: Database is disabled (devices endpoint)
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            sample:
+              value: Database is disabled
+
+    DatabaseDisabledLowercase:
+      description: database is disabled (device sub-endpoints)
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            sample:
+              value: database is disabled
+
+    InternalError:
+      description: Internal server error
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            sample:
+              value: internal error
+
+  schemas:
+    Device:
+      type: object
+      required: [DeviceID, DeviceName, CreatedAt]
+      properties:
+        DeviceID:
+          type: integer
+          format: int64
+          example: 1
+        DeviceName:
+          type: string
+          example: R1
+        CreatedAt:
+          type: string
+          format: date-time
+          example: "2026-01-10T10:00:00Z"
+
+    RouterSNMP:
+      type: object
+      required: [Bucket, DeviceID, SysName, SysUptimeCS, SysDescr]
+      properties:
+        Bucket:
+          type: string
+          format: date-time
+          example: "2026-01-23T09:15:00Z"
+        DeviceID:
+          type: integer
+          format: int64
+          example: 1
+        SysName:
+          type: string
+          example: R1
+        SysUptimeCS:
+          type: integer
+          format: int64
+          description: sysUpTime centiseconds
+          example: 123456
+        SysDescr:
+          type: string
+          example: "Cisco IOS Software ..."
+
+    RouterInterfaceMetric:
+      type: object
+      required:
+        [Bucket, DeviceID, IfIndex, IfDescr, IfOperStatus, IfInOctets, IfOutOctets]
+      properties:
+        Bucket:
+          type: string
+          format: date-time
+          example: "2026-01-23T09:15:00Z"
+        DeviceID:
+          type: integer
+          format: int64
+          example: 1
+        IfIndex:
+          type: integer
+          format: int32
+          example: 1
+        IfDescr:
+          type: string
+          example: "FastEthernet0/0"
+        IfOperStatus:
+          type: integer
+          format: int16
+          description: ifOperStatus (1=up, 2=down, ...)
+          example: 1
+        IfInOctets:
+          type: integer
+          format: int64
+          example: 123456789
+        IfOutOctets:
+          type: integer
+          format: int64
+          example: 987654321
+
+    RouterIPRoute:
+      type: object
+      required:
+        [Bucket, DeviceID, Dest, Mask, NextHop, IfIndex, RouteType, LastSeenTime]
+      properties:
+        Bucket:
+          type: string
+          format: date-time
+          example: "2026-01-23T09:15:00Z"
+        DeviceID:
+          type: integer
+          format: int64
+          example: 1
+        Dest:
+          type: string
+          example: "10.10.10.0"
+        Mask:
+          type: string
+          example: "255.255.255.0"
+        NextHop:
+          type: string
+          example: "192.168.10.1"
+        IfIndex:
+          type: integer
+          format: int32
+          example: 1
+        RouteType:
+          type: integer
+          format: int16
+          description: route type (implementation-specific)
+          example: 4
+        LastSeenTime:
+          type: string
+          format: date-time
+          example: "2026-01-23T09:15:00Z"
