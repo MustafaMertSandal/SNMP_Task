@@ -40,7 +40,7 @@ verileri TimescaleDB’de saklayan ve Web API üzerinden görüntüleyen Golang 
   sudo ip route add 10.10.20.0/24 via 10.10.10.1 dev tap0
 - Bağlantıyı terminalinden test et.
   ```bash
-  snmpget -v2c -c public 10.10.10.1 1.3.6.1.2.1.1.1.0
+  ping 10.10.20.2
   
 
 ### 3) Konfigürasyon
